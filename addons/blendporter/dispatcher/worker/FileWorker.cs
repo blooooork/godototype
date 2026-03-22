@@ -17,10 +17,10 @@ public class FileWorker : IWorker
             return false;
         SetOwnerRecursive(node, node);
         // Reset node position to 0, 0, 0
-        var resetPositionKey = (Variant)new StringName(CustomNames.ResetPosition);
+        var resetPositionKey = (Variant)new StringName(Names.ResetPosition);
         var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.BlankVector3};
-        node.SetMeta(DictionaryNames.Extras, extrasDictionary);
-        if (!PropertyWorker.Work(node, DictionaryNames.Extras))
+        node.SetMeta(Names.Extras, extrasDictionary);
+        if (!PropertyWorker.Work(node, Names.Extras))
             GD.Print($"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
         // Pack and save file
         var packedNode = new PackedScene();

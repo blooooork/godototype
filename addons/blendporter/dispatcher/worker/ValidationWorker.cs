@@ -1,4 +1,6 @@
 using Godot;
+using System.Linq;
+
 using blendporter.definition;
 
 namespace blendporter.dispatcher.worker;
@@ -21,7 +23,7 @@ public class ValidationWorker : IWorker
             case Type.DictionaryName:
                 if (incomingObject is not StringName name)
                     return false;
-                return DictionaryNames.All.Contains(name);
+                return Names.Dictionaries.Contains(name);
             case Type.MetaData:
                 if (incomingObject is not Node3D node)
                     return false;
