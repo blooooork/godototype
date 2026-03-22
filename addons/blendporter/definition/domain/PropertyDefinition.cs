@@ -3,4 +3,4 @@ using System;
 
 namespace blendporter.definition;
 
-public record PropertyDefinition(string Name, Func<Variant, object> ConvertValue, Action<Node, object> ApplyProperty);
+public record PropertyDefinition(string Name, Type Type, Func<Variant, object> Convert, Action<Node, object> Apply);

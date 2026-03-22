@@ -8,6 +8,8 @@ namespace blendporter.definition;
 
 public static class DefinitionRegistry
 {
+    // TODO All of this is now defunct because we define type -> definition within the PropertyDefinition
+    // TODO This class should now be really just gone and rename ProeprtyDefinitions to DefinitionRegistry
     private static readonly System.Collections.Generic.Dictionary<Type, List<PropertyDefinition>> Registry = new()
     {
         [typeof(Node3D)] = [

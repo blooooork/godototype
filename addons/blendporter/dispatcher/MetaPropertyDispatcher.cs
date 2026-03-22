@@ -27,6 +27,7 @@ public class MetaPropertyDispatcher: IDispatcher
             return false;
         // Attempt to apply properties from validated meta dictionary
         var metaList = node.GetMetaList();
+        GD.PrintErr($"Node \"{node.Name}\" meta list size is {metaList.Count}");
         return metaList.Select(meta => PropertyWorker.Work(node, meta))
             // Collect the outputs to a list and see if any were true
             .ToList()
