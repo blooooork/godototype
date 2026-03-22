@@ -10,7 +10,10 @@ public static class DefinitionRegistry
 {
     private static readonly System.Collections.Generic.Dictionary<Type, List<PropertyDefinition>> Registry = new()
     {
-        // TODO Need to make a Node3D definition
+        [typeof(Node3D)] = [
+            PropertyDefinitions.PositionDefinition,
+            PropertyDefinitions.TransformDefinition
+        ],
         [typeof(RigidBody3D)] = [
             PropertyDefinitions.GravityScaleDefinition, 
             PropertyDefinitions.MassDefinition,
