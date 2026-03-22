@@ -1,4 +1,5 @@
-using blendporter.definition;
+using System.Linq;
+using blendporter.dispatcher.worker;
 using Godot;
 using Godot.Collections;
 
@@ -6,46 +7,36 @@ namespace blendporter.dispatcher;
 
 public class SceneDispatcher : IDispatcher
 {
-    private const string SceneExtension = ".tscn";
-    public string OutputPath {get; set;}
-    private readonly MetaPropertyDispatcher _metaPropertyDispatcher = new ();
+    private string _outputPath;
+    private static readonly DirectoryDispatcher DirectoryDispatcher = new();
+    private static readonly FileWorker FileWorker = new();
 
     public bool Dispatch(Node node)
     {
-        if (OutputPath is null || !DirAccess.DirExistsAbsolute(OutputPath))
-            return false;
-        SetOwnerRecursive(node, node);
-        // Reset node position to 0, 0, 0
-        var resetPositionKey = (Variant)new StringName(CustomNames.ResetPosition);
-        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.BlankVector3};
-        node.SetMeta(DictionaryNames.Extras, extrasDictionary);
-        if (!_metaPropertyDispatcher.Dispatch(node))
-            GD.Print($"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
-        // Pack and save file
-        var packedNode = new PackedScene();
-        packedNode.Pack(node);
-        var filePath = $"{OutputPath}/{node.Name}{SceneExtension}";
-        // Iterate through numbering filenames if you have to
-        var i = 1;
-        while (FileAccess.FileExists(filePath))
-            filePath = $"{OutputPath}/{node.Name}-{i++}{SceneExtension}";
-        var error = ResourceSaver.Save(packedNode, filePath);
-        if (error == Error.Ok)
-            return true;
-        GD.PrintErr($"Scene could not be created. Failed with error \"{error.ToString()}\"");
-        return false;
-    }
-
-    private static void SetOwnerRecursive(Node node, Node owner)
-    {
-        if(node != owner)
-            node.Owner = owner;
+        var children = new Array<Node>();
         foreach (var child in node.GetChildren())
-            SetOwnerRecursive(child, owner);
+        {
+            var clonedChild = child.Duplicate();
+            children.Add(clonedChild);
+        }
+        if (children.Count == 0)
+            return false;
+        // Attempt to create output directory
+        if (!DirectoryDispatcher.Dispatch(node))
+        {
+            GD.PrintErr($"Output directory for scene \"{node.Name}\" couldn't be created");
+            return false;
+        }
+        // Output main node and children as scene files
+        _outputPath = DirectoryDispatcher.OutputPath;
+        var successCount = FileWorker.Work(node, _outputPath) ? 1 : 0;
+        successCount += children.Count(c => FileWorker.Work(c, _outputPath));
+        GD.Print($"{successCount} files created from node \"{node.Name}\"");
+        return successCount > 0;
     }
 
     public void Reset()
     {
-        OutputPath = null;
+        _outputPath = null;
     }
 }

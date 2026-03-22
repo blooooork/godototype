@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Collections.Generic;
 using Godot;
 using blendporter.dispatcher;
@@ -20,45 +19,8 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
     public override void _PostProcess(Node scene)
     {
         GD.Print($"Beginning post processing of scene {scene.Name}");
-        var nodesAffected = ProcessNode(scene);
-        var filesCreated = OutputSceneFiles(scene);
-        GD.Print($"Scene post processing complete; {nodesAffected} nodes affected; {filesCreated} files created");
+        _metaDispatcher.Dispatch(scene);
+        _sceneDispatcher.Dispatch(scene);
         _processDispatchers.ForEach(d => d.Reset());
-    }
-
-    private int ProcessNode(Node node)
-    {
-        // Recursively process all child nodes
-        var children = new Godot.Collections.Array<Node>();
-        foreach (var child in node.GetChildren())
-            children.Add(child);
-        var successCount = children.Sum(ProcessNode);
-        // Attempt to apply meta properties
-        if (_metaDispatcher.Dispatch(node))
-            successCount++;
-        return successCount;
-    }
-
-    private int OutputSceneFiles(Node node)
-    {
-        var children = new Godot.Collections.Array<Node>();
-        foreach (var child in node.GetChildren())
-        {
-            var clonedChild = child.Duplicate();
-            children.Add(clonedChild);
-        }
-        if (children.Count == 0)
-            return 0;
-        // Attempt to create output directory
-        if (!_directoryDispatcher.Dispatch(node))
-        {
-            GD.PrintErr($"Output directory for scene \"{node.Name}\" couldn't be created");
-            return 0;
-        }
-        // Output main node and children as scene files
-        _sceneDispatcher.OutputPath = DirectoryDispatcher.OutputPath;
-        var successCount = _sceneDispatcher.Dispatch(node) ? 1 : 0;
-        successCount += children.Count(_sceneDispatcher.Dispatch);
-        return successCount;
     }
 }
