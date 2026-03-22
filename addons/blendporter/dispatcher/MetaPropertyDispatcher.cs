@@ -8,8 +8,10 @@ public class MetaPropertyDispatcher: IDispatcher
 {
     private static readonly ValidationWorker ValidationWorker = new ();
     private static readonly PropertyWorker PropertyWorker = new ();
-    public bool Dispatch(Node node)
+    public bool Dispatch(object incomingObject)
     {
+        if (incomingObject is not Node3D node)
+            return false;
         // Recursively process all child nodes
         var children = new Godot.Collections.Array<Node>();
         foreach (var child in node.GetChildren())

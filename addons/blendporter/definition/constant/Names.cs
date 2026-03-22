@@ -14,4 +14,6 @@ public static class Names
     public static readonly StringName Mass = new("mass");
     public static readonly StringName ResetPosition = new("reset_position");
     public static readonly IReadOnlyList<string> Properties = [Transform, GravityScale, Mass, ResetPosition];
+    // Logger setting names
+    public static readonly StringName LogLevelSetting = new("blendporter/debug/log_level");
 }

@@ -11,8 +11,10 @@ public class SceneDispatcher : IDispatcher
     private static readonly DirectoryDispatcher DirectoryDispatcher = new();
     private static readonly FileWorker FileWorker = new();
 
-    public bool Dispatch(Node node)
+    public bool Dispatch(object incomingObject)
     {
+        if(incomingObject is not  Node3D node)
+            return false;
         var children = new Array<Node>();
         foreach (var child in node.GetChildren())
         {
