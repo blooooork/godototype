@@ -9,8 +9,10 @@ public class FileWorker : IWorker
     private const string SceneExtension = ".tscn";
     private static readonly PropertyWorker PropertyWorker = new();
     #nullable enable
-    public bool Work(Node node, object? details)
+    public bool Work(object incomingObject, object? details)
     {
+        if (incomingObject is not Node3D node)
+            return false;
         if (details is not string detailString || !DirAccess.DirExistsAbsolute(detailString))
             return false;
         SetOwnerRecursive(node, node);

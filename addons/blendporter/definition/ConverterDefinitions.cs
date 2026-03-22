@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 namespace blendporter.definition;
@@ -28,4 +29,5 @@ public static class ConverterDefinitions
             return null;
         return new Vector3(v[0], v[1], v[2]);
     };
+    public static readonly Func<Variant, object> DictionaryConverter = v => v.Obj as Godot.Collections.Dictionary;
 }

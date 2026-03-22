@@ -23,11 +23,10 @@ public class MetaPropertyDispatcher: IDispatcher
 
     private static bool ApplyProperty(Node node)
     {
-        if (!ValidationWorker.Work(node, null))
+        if (!ValidationWorker.Work(node, ValidationWorker.Type.MetaData))
             return false;
         // Attempt to apply properties from validated meta dictionary
         var metaList = node.GetMetaList();
-        GD.PrintErr($"Node \"{node.Name}\" meta list size is {metaList.Count}");
         return metaList.Select(meta => PropertyWorker.Work(node, meta))
             // Collect the outputs to a list and see if any were true
             .ToList()

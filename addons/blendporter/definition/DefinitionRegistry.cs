@@ -1,50 +1,55 @@
-using System;
 using System.Collections.Generic;
+using System;
 using Godot;
-using Godot.Collections;
 using System.Linq;
 
 namespace blendporter.definition;
 
 public static class DefinitionRegistry
 {
-    // TODO All of this is now defunct because we define type -> definition within the PropertyDefinition
-    // TODO This class should now be really just gone and rename ProeprtyDefinitions to DefinitionRegistry
-    private static readonly System.Collections.Generic.Dictionary<Type, List<PropertyDefinition>> Registry = new()
-    {
-        [typeof(Node3D)] = [
-            PropertyDefinitions.PositionDefinition,
-            PropertyDefinitions.TransformDefinition
-        ],
-        [typeof(RigidBody3D)] = [
-            PropertyDefinitions.GravityScaleDefinition, 
-            PropertyDefinitions.MassDefinition,
-            PropertyDefinitions.TransformDefinition,
-            PropertyDefinitions.PositionDefinition
-        ],
-        [typeof(MeshInstance3D)] = [
-            PropertyDefinitions.TransformDefinition,
-            PropertyDefinitions.PositionDefinition
-        ]
-    };
-
-    public static bool IsTypeDefined(Type type)
-    {
-        return Registry.ContainsKey(type);
-    }
-
-    public static Dictionary ValidatePropertyDictionary(Node node, StringName name)
-    {
-        if (!DictionaryNames.All.Contains(name))
-            return [];
-        var metaValue = node.GetMeta(name);
-        return metaValue.Obj as Dictionary ?? [];
-    }
+    public static readonly PropertyDefinition GravityScaleDefinition = new (
+        CustomNames.GravityScale,
+        typeof(RigidBody3D),
+        ConverterDefinitions.FloatConverter,
+        ApplicatorDefinitions.GravityScaleApplicator
+    );
+    public static readonly PropertyDefinition MassDefinition = new (
+        CustomNames.Mass, 
+        typeof(RigidBody3D),
+        ConverterDefinitions.FloatConverter, 
+        ApplicatorDefinitions.MassApplicator
+    );
     
+    public static readonly PropertyDefinition TransformDefinition = new (
+        CustomNames.Transform,
+        typeof(Node3D),
+        ConverterDefinitions.TransformConverter,
+        ApplicatorDefinitions.TransformApplicator
+    );
+
+    public static readonly PropertyDefinition PositionDefinition = new (
+        CustomNames.ResetPosition,
+        typeof(Node3D),
+        ConverterDefinitions.Vector3Converter,
+        ApplicatorDefinitions.PositionApplicator
+    );
+    
+    private static readonly PropertyDefinition[] PropertyList =
+    [
+        GravityScaleDefinition,
+        MassDefinition,
+        TransformDefinition,
+        PositionDefinition
+    ];
+
+    public static readonly Dictionary<Type, List<PropertyDefinition>> All =
+        PropertyList.GroupBy(d => d.Type)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
     #nullable enable
-    
-    public static System.Collections.Generic.Dictionary<string, PropertyDefinition>? GetTypeDefinitions(Type type)
+    public static PropertyDefinition? GetPropertyDefinition(string customName)
     {
-        return IsTypeDefined(type) ? Registry[type].ToDictionary(d => d.Name, d => d) : null;
+        return PropertyList.FirstOrDefault(d => d.Name == customName);
     }
+    #nullable disable
 }

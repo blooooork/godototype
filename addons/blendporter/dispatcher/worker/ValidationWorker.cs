@@ -5,22 +5,42 @@ namespace blendporter.dispatcher.worker;
 
 public class ValidationWorker : IWorker
 {
-    #nullable enable
-    public bool Work(Node node, object? details)
+    public enum Type
     {
-        var metaList = node.GetMetaList();
-        if (metaList == null || metaList.Count == 0)
-        {
-            GD.Print($"{node.Name} had an empty meta list");
+        MetaData,
+        DictionaryName
+    }
+    
+    #nullable enable
+    public bool Work(object incomingObject, object? details)
+    {
+        if (details is not Type detailsType)
             return false;
-        }
-        // Validate node type is defined
-        if (!DefinitionRegistry.IsTypeDefined(node.GetType()))
+        switch (detailsType)
         {
-            GD.Print($"{node.Name}'s type definition is not defined");
-            return false;
+            case Type.DictionaryName:
+                if (incomingObject is not StringName name)
+                    return false;
+                return DictionaryNames.All.Contains(name);
+            case Type.MetaData:
+                if (incomingObject is not Node3D node)
+                    return false;
+                var metaList = node.GetMetaList();
+                if (metaList == null || metaList.Count == 0)
+                {
+                    GD.Print($"{node.Name} had an empty meta list");
+                    return false;
+                }
+                // Validate node type is defined
+                if (!DefinitionRegistry.All.ContainsKey(node.GetType()))
+                {
+                    GD.Print($"{node.Name}'s type definition is not defined");
+                    return false;
+                }
+                return true;
+            default:
+                return false;
         }
-        return true;
     }
     #nullable disable
 }
