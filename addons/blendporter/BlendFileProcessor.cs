@@ -32,7 +32,6 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
         var children = new Godot.Collections.Array<Node>();
         foreach (var child in node.GetChildren())
             children.Add(child);
-
         var successCount = children.Sum(ProcessNode);
         // Attempt to apply meta properties
         if (_metaDispatcher.Dispatch(node))
@@ -53,12 +52,12 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
         // Attempt to create output directory
         if (!_directoryDispatcher.Dispatch(node))
         {
-            GD.PushError($"Output directory for scene \"{node.Name}\" couldn't be created");
+            GD.PrintErr($"Output directory for scene \"{node.Name}\" couldn't be created");
             return 0;
         }
-        // Output each child of main node as a scene file
+        // Output main node and children as scene files
         _sceneDispatcher.OutputPath = DirectoryDispatcher.OutputPath;
-        var successCount = 0;
+        var successCount = _sceneDispatcher.Dispatch(node) ? 1 : 0;
         successCount += children.Count(_sceneDispatcher.Dispatch);
         return successCount;
     }

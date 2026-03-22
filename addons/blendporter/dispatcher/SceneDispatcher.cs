@@ -17,7 +17,7 @@ public class SceneDispatcher : IDispatcher
         SetOwnerRecursive(node, node);
         // Reset node position to 0, 0, 0
         var resetPositionKey = (Variant)new StringName(CustomNames.ResetPosition);
-        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = DefaultDefinitions.BlankVector3};
+        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.BlankVector3};
         node.SetMeta(DictionaryNames.Extras, extrasDictionary);
         if (!_metaPropertyDispatcher.Dispatch(node))
             GD.Print($"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
@@ -25,13 +25,14 @@ public class SceneDispatcher : IDispatcher
         var packedNode = new PackedScene();
         packedNode.Pack(node);
         var filePath = $"{OutputPath}/{node.Name}{SceneExtension}";
+        // Iterate through numbering filenames if you have to
         var i = 1;
         while (FileAccess.FileExists(filePath))
             filePath = $"{OutputPath}/{node.Name}-{i++}{SceneExtension}";
         var error = ResourceSaver.Save(packedNode, filePath);
         if (error == Error.Ok)
             return true;
-        GD.PushError($"Scene could not be created. Failed with error \"{error.ToString()}\"");
+        GD.PrintErr($"Scene could not be created. Failed with error \"{error.ToString()}\"");
         return false;
     }
 
