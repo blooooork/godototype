@@ -23,7 +23,7 @@ public class ValidationWorker : IWorker
             case Type.DictionaryName:
                 if (incomingObject is not StringName name)
                     return false;
-                return Names.Dictionaries.Contains(name);
+                return Properties.MetaKeys.Contains(name);
             case Type.MetaData:
                 if (incomingObject is not Node3D node)
                     return false;
@@ -34,7 +34,7 @@ public class ValidationWorker : IWorker
                     return false;
                 }
                 // Validate node type is defined
-                if (!PropertyRegistry.PropertyDefinitions.ContainsKey(node.GetType()))
+                if (!Properties.TypeDictionary.ContainsKey(node.GetType()))
                 {
                     GD.Print($"{node.Name}'s type definition is not defined");
                     return false;

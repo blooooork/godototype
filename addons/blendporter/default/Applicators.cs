@@ -3,7 +3,7 @@ using Godot;
 
 namespace blendporter.definition;
 
-public static class ApplicatorDefinitions
+public static class Applicators
 {
     public static readonly Action<Node, object> TransformApplicator =
         (node, value) => ((Node3D)node).SetGlobalTransform((Transform3D)value);

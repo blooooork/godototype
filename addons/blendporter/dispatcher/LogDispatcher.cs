@@ -18,21 +18,21 @@ public class LogDispatcher : IDispatcher
 
     public void Reset()
     {
-        SetLogLevel(Defaults.LogLevel);
+        SetLogLevel(Settings.LogLevel);
     }
     
     #nullable enable
     public static LogLevel? GetLogLevel()
     {
-        SettingRegistry.Register(SettingRegistry.SettingDefinitions[Names.LogLevelSetting]);
-        var value = ProjectSettings.GetSetting(Names.LogLevelSetting);
+        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
+        var value = ProjectSettings.GetSetting(Settings.LogLevelSetting);
         return value.Obj is null ? null : (LogLevel)value.AsInt32();
     }
     #nullable disable
 
     public static void SetLogLevel(LogLevel logLevel)
     {
-        SettingRegistry.Register(SettingRegistry.SettingDefinitions[Names.LogLevelSetting]);
-        ProjectSettings.SetSetting(Names.LogLevelSetting, (int)logLevel);
+        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
+        ProjectSettings.SetSetting(Settings.LogLevelSetting, (int)logLevel);
     }
 }
