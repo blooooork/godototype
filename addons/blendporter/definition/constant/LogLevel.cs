@@ -10,13 +10,3 @@ public enum LogLevel
     Info = 2,
     Debug = 3,
 }
-
-public static LogLevel GetLogLevel()
-{
-    var value = ProjectSettings.GetSetting(Names.LogLevelSetting, (int)LogLevel.Warning).AsInt32();
-    
-    if (!Enum.IsDefined(typeof(LogLevel), value))
-        return LogLevel.Warning;
-    
-    return (LogLevel)value;
-}

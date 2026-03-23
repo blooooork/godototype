@@ -37,7 +37,7 @@ public class PropertyWorker : IWorker
         //          Then applies converted value with the applicator
         foreach (var kV in propDictionary)
         {
-            var propDef = DefinitionRegistry.GetPropertyDefinition((string)kV.Key);
+            var propDef = PropertyRegistry.GetPropertyDefinition((string)kV.Key);
             if (propDef == null)
                 continue;
             var propValue = propDef.Convert(kV.Value);

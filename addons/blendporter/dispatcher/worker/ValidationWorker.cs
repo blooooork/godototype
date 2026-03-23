@@ -34,7 +34,7 @@ public class ValidationWorker : IWorker
                     return false;
                 }
                 // Validate node type is defined
-                if (!DefinitionRegistry.All.ContainsKey(node.GetType()))
+                if (!PropertyRegistry.PropertyDefinitions.ContainsKey(node.GetType()))
                 {
                     GD.Print($"{node.Name}'s type definition is not defined");
                     return false;

@@ -18,7 +18,7 @@ public class FileWorker : IWorker
         SetOwnerRecursive(node, node);
         // Reset node position to 0, 0, 0
         var resetPositionKey = (Variant)new StringName(Names.ResetPosition);
-        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.BlankVector3};
+        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.Position};
         node.SetMeta(Names.Extras, extrasDictionary);
         if (!PropertyWorker.Work(node, Names.Extras))
             GD.Print($"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
