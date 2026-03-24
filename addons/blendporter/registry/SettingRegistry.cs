@@ -1,13 +1,12 @@
 using blendporter.definition;
 using Godot;
 using System.Collections.Generic;
-using godototype.addons.blendporter.registry;
 
 namespace blendporter.registry;
 
-public class SettingRegistry : IRegistry
+public static class SettingRegistry
 {
-    public bool Register()
+    public static bool Register()
     {
         if (Settings.All.Length == 0)
             return false;
@@ -16,11 +15,12 @@ public class SettingRegistry : IRegistry
         return true;
     }
     
-    public bool Register(SettingDefinition setting)
+    public static bool Register(SettingDefinition setting)
     {
-        if (ProjectSettings.HasSetting(setting.Name) || !Settings.NameDictionary.ContainsKey(setting.Name))
+        if (!Settings.NameDictionary.ContainsKey(setting.Name))
             return false;
-        ProjectSettings.SetSetting(setting.Name, (int)setting.DefaultValue);
+        if (!ProjectSettings.HasSetting(setting.Name))
+            ProjectSettings.SetSetting(setting.Name, (int)setting.DefaultValue);
         ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
         {
             {Settings.SettingNameKey, setting.Name},
@@ -31,7 +31,7 @@ public class SettingRegistry : IRegistry
         return true;
     }
 
-    public bool Register(List<SettingDefinition> settings)
+    public static bool Register(List<SettingDefinition> settings)
     {
         if (settings.Count == 0)
             return false;
@@ -40,7 +40,7 @@ public class SettingRegistry : IRegistry
         return true;
     }
 
-    public bool Unregister()
+    public static bool Unregister()
     {
         if (Settings.All.Length == 0)
             return false;
@@ -49,7 +49,7 @@ public class SettingRegistry : IRegistry
         return true;
     }
     
-    public bool Unregister(SettingDefinition setting)
+    public static bool Unregister(SettingDefinition setting)
     {
         if (ProjectSettings.HasSetting(setting.Name))
             return false;
@@ -57,7 +57,7 @@ public class SettingRegistry : IRegistry
         return true;
     }
 
-    public bool Unregister(List<SettingDefinition> settings)
+    public static bool Unregister(List<SettingDefinition> settings)
     {
         if(settings.Count == 0)
             return false;

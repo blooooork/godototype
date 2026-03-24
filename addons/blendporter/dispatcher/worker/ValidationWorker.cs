@@ -7,6 +7,7 @@ namespace blendporter.dispatcher.worker;
 
 public class ValidationWorker : IWorker
 {
+    private static readonly LogDispatcher LogDispatcher = new();
     public enum Type
     {
         MetaData,
@@ -30,13 +31,13 @@ public class ValidationWorker : IWorker
                 var metaList = node.GetMetaList();
                 if (metaList == null || metaList.Count == 0)
                 {
-                    GD.Print($"{node.Name} had an empty meta list");
+                    LogDispatcher.Dispatch((LogLevel.Debug, $"{node.Name} had an empty meta list"));
                     return false;
                 }
                 // Validate node type is defined
                 if (!Properties.TypeDictionary.ContainsKey(node.GetType()))
                 {
-                    GD.Print($"{node.Name}'s type definition is not defined");
+                    LogDispatcher.Dispatch((LogLevel.Debug, $"{node.Name}'s type definition is not defined"));
                     return false;
                 }
                 return true;

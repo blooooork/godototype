@@ -1,38 +1,24 @@
-using Godot;
 using System;
 using blendporter.definition;
-using blendporter.registry;
+using blendporter.dispatcher.worker;
+using System.Diagnostics;
 
 namespace blendporter.dispatcher;
 
 public class LogDispatcher : IDispatcher
 {
-    private static readonly SettingRegistry SettingRegistry = new();
+    private static readonly LogWorker LogWorker = new();
     public bool Dispatch(object incomingObject)
     {
-        if (incomingObject is not Tuple<LogLevel, string> logEntry)
-            return false;
-        // TODO Implement
-        return false;
+        var caller = new StackFrame(1).GetMethod()?.DeclaringType?.Name ?? "Unknown";
+        return incomingObject is ValueTuple<LogLevel, string> logEntry && 
+            LogWorker.Work(logEntry.Item1, (caller, logEntry.Item2));
     }
 
     public void Reset()
     {
-        SetLogLevel(Settings.LogLevel);
+        LogWorker.SetLogLevel(Settings.DefaultLogLevel);
     }
     
-    #nullable enable
-    public static LogLevel? GetLogLevel()
-    {
-        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
-        var value = ProjectSettings.GetSetting(Settings.LogLevelSetting);
-        return value.Obj is null ? null : (LogLevel)value.AsInt32();
-    }
-    #nullable disable
 
-    public static void SetLogLevel(LogLevel logLevel)
-    {
-        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
-        ProjectSettings.SetSetting(Settings.LogLevelSetting, (int)logLevel);
-    }
 }

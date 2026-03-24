@@ -4,10 +4,10 @@ using System.Linq;
 
 namespace blendporter.definition;
 
-public class Settings
+public static class Settings
 {
-    public const LogLevel LogLevel = definition.LogLevel.Warning;
-    private const string LogLevelString = "Error,Warning,Info,Debug";
+    public const LogLevel DefaultLogLevel = LogLevel.Debug;
+    private const string LogLevelsString = "Error,Warning,Info,Debug";
     
     // Setting names
     public static readonly StringName LogLevelSetting = new("blendporter/debug/log_level");
@@ -21,8 +21,8 @@ public class Settings
         LogLevelSetting,
         Variant.Type.Int,
         PropertyHint.Enum,
-        LogLevelString,
-        LogLevel
+        LogLevelsString,
+        DefaultLogLevel
     );
 
     public static readonly SettingDefinition[] All =
