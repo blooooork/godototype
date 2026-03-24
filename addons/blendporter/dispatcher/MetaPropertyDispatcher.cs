@@ -1,11 +1,13 @@
 using Godot;
 using System.Linq;
+using blendporter.definition;
 using blendporter.dispatcher.worker;
 
 namespace blendporter.dispatcher;
 
 public class MetaPropertyDispatcher: IDispatcher
 {
+    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly ValidationWorker ValidationWorker = new ();
     private static readonly PropertyWorker PropertyWorker = new ();
     public bool Dispatch(object incomingObject)
@@ -19,7 +21,8 @@ public class MetaPropertyDispatcher: IDispatcher
         // Attempt to apply properties
         var successCount = ApplyProperty(node) ? 1 : 0;
         successCount += children.Sum(c => ApplyProperty(c) ? 1 : 0);
-        GD.Print($"{successCount} nodes of \"{node.Name}\" have been updated with meta properties");
+        var successLog = $"{successCount} nodes of \"{node.Name}\" have been updated with meta properties";
+        LogDispatcher.Dispatch((LogLevel.Debug, successLog));
         return successCount > 0;
     }
 

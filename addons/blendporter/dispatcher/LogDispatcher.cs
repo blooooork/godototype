@@ -1,19 +1,22 @@
+using System;
 using blendporter.definition;
+using blendporter.dispatcher.worker;
+using System.Diagnostics;
 
 namespace blendporter.dispatcher;
 
 public class LogDispatcher : IDispatcher
 {
-    private static LogLevel _logLevel { get; set; } = LogLevel.Info;
-
+    private static readonly LogWorker LogWorker = new();
     public bool Dispatch(object incomingObject)
     {
-        // TODO Implement
-        return false;
+        var caller = new StackFrame(1).GetMethod()?.DeclaringType?.Name ?? "Unknown";
+        return incomingObject is ValueTuple<LogLevel, string> logEntry && 
+            LogWorker.Work(logEntry.Item1, (caller, logEntry.Item2));
     }
 
     public void Reset()
     {
-        // Nothing to do here
+        LogWorker.SetLogLevel(Settings.DefaultLogLevel);
     }
 }

@@ -1,4 +1,7 @@
 #if TOOLS
+using blendporter.definition;
+using blendporter.registry;
+using blendporter.dispatcher;
 using Godot;
 
 namespace blendporter;
@@ -7,17 +10,21 @@ namespace blendporter;
 public partial class BlendImporter : EditorPlugin
 {
 	private BlendFileProcessor _blendFileProcessor;
+	private LogDispatcher _logDispatcher;
 	public override void _EnterTree()
 	{
 		_blendFileProcessor = new BlendFileProcessor();
 		AddScenePostImportPlugin(_blendFileProcessor);
-		GD.Print("Blend processor initialized");
+		SettingRegistry.Register();
+		_logDispatcher = new LogDispatcher();
+		_logDispatcher.Dispatch((LogLevel.Info, "Blend processor initialized"));
 	}
 
 	public override void _ExitTree()
 	{
 		RemoveScenePostImportPlugin(_blendFileProcessor);
-		GD.Print( "Blend processor stopped");
+		SettingRegistry.Unregister();
+		_logDispatcher.Dispatch((LogLevel.Info, "Blend processor stopped"));
 	}
 }
 #endif

@@ -6,8 +6,9 @@ namespace blendporter.dispatcher.worker;
 
 public class FileWorker : IWorker
 {
-    private const string SceneExtension = ".tscn";
+    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly PropertyWorker PropertyWorker = new();
+    private const string SceneExtension = ".tscn";
     #nullable enable
     public bool Work(object incomingObject, object? details)
     {
@@ -17,11 +18,11 @@ public class FileWorker : IWorker
             return false;
         SetOwnerRecursive(node, node);
         // Reset node position to 0, 0, 0
-        var resetPositionKey = (Variant)new StringName(Names.ResetPosition);
-        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Defaults.BlankVector3};
-        node.SetMeta(Names.Extras, extrasDictionary);
-        if (!PropertyWorker.Work(node, Names.Extras))
-            GD.Print($"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
+        var resetPositionKey = (Variant)new StringName(Properties.ResetPosition);
+        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Properties.OriginPosition};
+        node.SetMeta(Properties.BlenderMetaKey, extrasDictionary);
+        if (!PropertyWorker.Work(node, Properties.BlenderMetaKey))
+            LogDispatcher.Dispatch((LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed"));
         // Pack and save file
         var packedNode = new PackedScene();
         packedNode.Pack(node);
@@ -33,7 +34,7 @@ public class FileWorker : IWorker
         var error = ResourceSaver.Save(packedNode, filePath);
         if (error == Error.Ok)
             return true;
-        GD.PrintErr($"Scene could not be created. Failed with error \"{error.ToString()}\"");
+        LogDispatcher.Dispatch((LogLevel.Error, $"Scene could not be created. Failed with error \"{error.ToString()}\""));
         return false;
     }
     #nullable disable

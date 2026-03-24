@@ -4,7 +4,7 @@ using Godot;
 
 namespace blendporter.definition;
 
-public static class ConverterDefinitions
+public static class Converters
 {
     public static readonly Func<Variant, object> FloatConverter = v => v.AsSingle();
     public static readonly Func<Variant, object> TransformConverter = fL =>

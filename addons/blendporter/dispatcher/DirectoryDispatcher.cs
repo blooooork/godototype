@@ -1,9 +1,11 @@
+using blendporter.definition;
 using Godot;
 
 namespace blendporter.dispatcher;
 
 public class DirectoryDispatcher : IDispatcher
 {
+    private static readonly LogDispatcher LogDispatcher = new();
     private const string BasePath = "res://blendporter";
     public static string OutputPath { get; set; }
     
@@ -15,7 +17,8 @@ public class DirectoryDispatcher : IDispatcher
         var error = DirAccess.MakeDirRecursiveAbsolute(OutputPath);
         if (error == Error.Ok)
             return true;
-        GD.PrintErr($"Directory could not be created. Failed with error \"{error.ToString()}\"");
+        LogDispatcher.Dispatch((LogLevel.Error,
+            $"Directory could not be created. Failed with error \"{error.ToString()}\""));
         return false;
     }
 
