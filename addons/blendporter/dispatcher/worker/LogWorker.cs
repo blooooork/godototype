@@ -31,20 +31,23 @@ public class LogWorker : IWorker
             case LogLevel.Debug:
                 GD.Print(logString);
                 break;
+            case LogLevel.Unknown:
             default:
                 return false;
         }
         return true;
     }
     
-    private static LogLevel? GetLogLevel()
+    #nullable disable
+    
+    private static LogLevel GetLogLevel()
     {
-        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
-        var value = ProjectSettings.GetSetting(Settings.LogLevelSetting);
-        return value.Obj is null ? null : (LogLevel)value.AsInt32();
+        var logLevel = SettingRegistry.GetSetting(Settings.NameDictionary[Settings.LogLevelSetting]);
+        if (logLevel == null)
+            return LogLevel.Unknown;
+        return (LogLevel)logLevel.Value.AsInt32();
     }
     
-    #nullable disable
 
     public static void SetLogLevel(LogLevel logLevel)
     {

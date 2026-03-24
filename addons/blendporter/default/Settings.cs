@@ -10,7 +10,8 @@ public static class Settings
     private const string LogLevelsString = "Error,Warning,Info,Debug";
     
     // Setting names
-    public static readonly StringName LogLevelSetting = new("blendporter/debug/log_level");
+    public static readonly StringName LogLevelSetting = new("blendporter/project/log_level");
+    public static readonly StringName CreateScenesSetting = new("blendporter/project/create_scenes");
     public static readonly StringName SettingNameKey = new("name");
     public static readonly StringName SettingTypeKey = new("type");
     public static readonly StringName SettingHintKey = new("hint");
@@ -22,12 +23,21 @@ public static class Settings
         Variant.Type.Int,
         PropertyHint.Enum,
         LogLevelsString,
-        DefaultLogLevel
+        (int)DefaultLogLevel
     );
+
+    private static readonly SettingDefinition CreateSceneDefin = new(
+        CreateScenesSetting,
+        Variant.Type.Bool,
+        PropertyHint.None,
+        "",
+        false
+        );
 
     public static readonly SettingDefinition[] All =
     [
-        LogLevelDefinition
+        LogLevelDefinition,
+        CreateSceneDefin
     ];
 
     public static readonly Dictionary<StringName, SettingDefinition> NameDictionary =

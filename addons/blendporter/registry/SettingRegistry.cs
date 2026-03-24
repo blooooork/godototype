@@ -20,7 +20,7 @@ public static class SettingRegistry
         if (!Settings.NameDictionary.ContainsKey(setting.Name))
             return false;
         if (!ProjectSettings.HasSetting(setting.Name))
-            ProjectSettings.SetSetting(setting.Name, (int)setting.DefaultValue);
+            ProjectSettings.SetSetting(setting.Name, setting.DefaultValue);
         ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
         {
             {Settings.SettingNameKey, setting.Name},
@@ -65,4 +65,13 @@ public static class SettingRegistry
             Unregister(setting);
         return true;
     }
+    
+    #nullable enable
+    public static Variant? GetSetting(SettingDefinition setting)
+    {
+        if (!Register(Settings.NameDictionary[setting.Name]))
+            return null;
+        return ProjectSettings.GetSetting(setting.Name);
+    }
+    #nullable disable
 }

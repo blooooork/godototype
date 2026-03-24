@@ -1,6 +1,7 @@
 using System.Linq;
 using blendporter.definition;
 using blendporter.dispatcher.worker;
+using blendporter.registry;
 using Godot;
 using Godot.Collections;
 
@@ -44,5 +45,13 @@ public class SceneDispatcher : IDispatcher
     public void Reset()
     {
         _outputPath = null;
+    }
+
+    public static bool IsSceneCreationEnabled()
+    {
+        var creationEnabled = SettingRegistry.GetSetting(Settings.NameDictionary[Settings.CreateScenesSetting]);
+        if (creationEnabled == null)
+            return false;
+        return creationEnabled.Value.AsBool();
     }
 }

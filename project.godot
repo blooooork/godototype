@@ -16,7 +16,8 @@ config/icon="res://icon.svg"
 
 [blendporter]
 
-debug/log_level=1
+project/log_level=3
+project/create_scenes=true
 
 [dotnet]
 

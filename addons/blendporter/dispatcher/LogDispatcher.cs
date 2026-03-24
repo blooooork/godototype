@@ -19,6 +19,4 @@ public class LogDispatcher : IDispatcher
     {
         LogWorker.SetLogLevel(Settings.DefaultLogLevel);
     }
-    
-
 }

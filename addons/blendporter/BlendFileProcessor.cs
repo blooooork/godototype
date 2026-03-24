@@ -17,7 +17,8 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
     {
         LogDispatcher.Dispatch((LogLevel.Info, $"Beginning post processing of scene {scene.Name}"));
         MetaDispatcher.Dispatch(scene);
-        SceneDispatcher.Dispatch(scene);
+        if (SceneDispatcher.IsSceneCreationEnabled())
+            SceneDispatcher.Dispatch(scene);
         ProcessDispatchers.ForEach(d => d.Reset());
     }
 }
