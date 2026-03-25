@@ -18,9 +18,7 @@ public static class ValidationWorker
         switch (validationType)
         {
             case Type.DictionaryName:
-                if (incomingObject is not StringName name)
-                    return false;
-                return Properties.MetaKeys.Contains(name);
+                return incomingObject is StringName name && Properties.MetaKeys.Contains(name);
             case Type.MetaData:
                 if (incomingObject is not Node3D node)
                     return false;
@@ -31,12 +29,10 @@ public static class ValidationWorker
                     return false;
                 }
                 // Validate node type is defined
-                if (!Properties.TypeDictionary.ContainsKey(node.GetType()))
-                {
-                    PluginLogger.Log(LogLevel.Debug, $"{node.Name}'s type definition is not defined");
-                    return false;
-                }
-                return true;
+                if (Properties.TypeDictionary.ContainsKey(node.GetType()))
+                    return true;
+                PluginLogger.Log(LogLevel.Debug, $"{node.Name}'s type definition is not defined");
+                return false;
             default:
                 return false;
         }

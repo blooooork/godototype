@@ -3,15 +3,13 @@ using Godot;
 
 namespace blendporter.dispatcher;
 
-public class DirectoryDispatcher : IDispatcher
+public static class DirectoryDispatcher
 {
     private const string BasePath = "res://blendporter";
     public static string OutputPath { get; set; }
     
-    public bool Dispatch(object incomingObject)
+    public static bool CreateDirectory(Node node)
     {
-        if(incomingObject is not Node3D node)
-            return false;
         OutputPath = $"{BasePath}/{node.Name}/";
         var error = DirAccess.MakeDirRecursiveAbsolute(OutputPath);
         if (error == Error.Ok)
@@ -21,7 +19,7 @@ public class DirectoryDispatcher : IDispatcher
         return false;
     }
 
-    public void Reset()
+    public static void Reset()
     {
         OutputPath = null;
     }

@@ -7,7 +7,7 @@ namespace blendporter.dispatcher.worker;
 public static class FileWorker
 {
     private const string SceneExtension = ".tscn";
-    public static bool CreateSceneFiles(Node3D node, string pathString)
+    public static bool CreateSceneFiles(Node node, string pathString)
     {
         if (!DirAccess.DirExistsAbsolute(pathString))
             return false;
