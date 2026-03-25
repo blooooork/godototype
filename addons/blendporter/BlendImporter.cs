@@ -14,14 +14,14 @@ public partial class BlendImporter : EditorPlugin
 	{
 		_blendFileProcessor = new BlendFileProcessor();
 		AddScenePostImportPlugin(_blendFileProcessor);
-		SettingRegistry.Register();
+		SettingService.Register();
 		PluginLogger.Log(LogLevel.Info, "Blend processor initialized");
 	}
 
 	public override void _ExitTree()
 	{
 		RemoveScenePostImportPlugin(_blendFileProcessor);
-		SettingRegistry.Unregister();
+		SettingService.Unregister();
 		PluginLogger.Log(LogLevel.Info, "Blend processor stopped");
 	}
 }

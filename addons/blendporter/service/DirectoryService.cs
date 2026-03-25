@@ -3,7 +3,7 @@ using Godot;
 
 namespace blendporter.dispatcher;
 
-public static class DirectoryDispatcher
+public static class DirectoryService
 {
     private const string BasePath = "res://blendporter";
     public static string OutputPath { get; set; }

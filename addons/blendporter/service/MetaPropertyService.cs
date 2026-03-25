@@ -5,7 +5,7 @@ using blendporter.dispatcher.worker;
 
 namespace blendporter.dispatcher;
 
-public static class MetaPropertyDispatcher
+public static class MetaPropertyService
 {
     public static void ApplyProperties(Node node)
     {
@@ -26,7 +26,7 @@ public static class MetaPropertyDispatcher
             return false;
         // Attempt to apply properties from validated meta dictionary
         var metaList = node.GetMetaList();
-        return metaList.Select(meta => PropertyWorker.ApplyDictionaryProperties(node, meta))
+        return metaList.Select(meta => PropertyApplicator.Apply(node, meta))
             // Collect the outputs to a list and see if any were true
             .ToList()
             .Any(x => x);

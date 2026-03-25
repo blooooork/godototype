@@ -9,10 +9,10 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
     public override void _PostProcess(Node scene)
     {
         PluginLogger.Log(LogLevel.Info, $"Beginning post processing of scene {scene.Name}");
-        MetaPropertyDispatcher.ApplyProperties(scene);
-        if (SceneDispatcher.IsSceneCreationEnabled())
-            SceneDispatcher.CreateScenes(scene);
-        DirectoryDispatcher.Reset();
-        SceneDispatcher.Reset();
+        MetaPropertyService.ApplyProperties(scene);
+        if (SceneService.IsSceneCreationEnabled())
+            SceneService.CreateScenes(scene);
+        DirectoryService.Reset();
+        SceneService.Reset();
     }
 }

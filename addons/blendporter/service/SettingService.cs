@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace blendporter.registry;
 
-public static class SettingRegistry
+public static class SettingService
 {
     public static bool Register()
     {

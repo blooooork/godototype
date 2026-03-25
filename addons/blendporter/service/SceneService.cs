@@ -7,7 +7,7 @@ using Godot.Collections;
 
 namespace blendporter.dispatcher;
 
-public static class SceneDispatcher
+public static class SceneService
 {
     private static string _outputPath;
 
@@ -22,16 +22,16 @@ public static class SceneDispatcher
         if (children.Count == 0)
             return;
         // Attempt to create output directory
-        if (!DirectoryDispatcher.CreateDirectory(node))
+        if (!DirectoryService.CreateDirectory(node))
         {
             var errorString = $"Output directory for scene \"{node.Name}\" couldn't be created";
             PluginLogger.Log(LogLevel.Error, errorString);
             return;
         }
         // Output main node and children as scene files
-        _outputPath = DirectoryDispatcher.OutputPath;
-        var successCount = FileWorker.CreateSceneFiles(node, _outputPath) ? 1 : 0;
-        successCount += children.Count(c => FileWorker.CreateSceneFiles(c, _outputPath));
+        _outputPath = DirectoryService.OutputPath;
+        var successCount = SceneCreator.Create(node, _outputPath) ? 1 : 0;
+        successCount += children.Count(c => SceneCreator.Create(c, _outputPath));
         var successString = $"{successCount} files created from node \"{node.Name}\"";
         PluginLogger.Log(LogLevel.Info, $"{successString}");
     }
@@ -44,7 +44,7 @@ public static class SceneDispatcher
     // TODO This should be something in SettingRegistry
     public static bool IsSceneCreationEnabled()
     {
-        var creationEnabled = SettingRegistry.GetSetting(Settings.NameDictionary[Settings.CreateScenesSetting]);
+        var creationEnabled = SettingService.GetSetting(Settings.NameDictionary[Settings.CreateScenesSetting]);
         return creationEnabled != null && creationEnabled.Value.AsBool();
     }
 }

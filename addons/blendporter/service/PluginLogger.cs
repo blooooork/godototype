@@ -34,7 +34,7 @@ public class PluginLogger
     
     private static LogLevel GetLogLevel()
     {
-        var logLevel = SettingRegistry.GetSetting(Settings.NameDictionary[Settings.LogLevelSetting]);
+        var logLevel = SettingService.GetSetting(Settings.NameDictionary[Settings.LogLevelSetting]);
         if (logLevel == null)
             return LogLevel.Unknown;
         return (LogLevel)logLevel.Value.AsInt32();
@@ -43,7 +43,7 @@ public class PluginLogger
     // TODO This should be a part of SettingRegistry as a whole
     public static void SetLogLevel(LogLevel logLevel)
     {
-        SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
+        SettingService.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
         ProjectSettings.SetSetting(Settings.LogLevelSetting, (int)logLevel);
     }
 }

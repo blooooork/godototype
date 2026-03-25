@@ -4,10 +4,10 @@ using blendporter.definition;
 
 namespace blendporter.dispatcher.worker;
 
-public static class FileWorker
+public static class SceneCreator
 {
     private const string SceneExtension = ".tscn";
-    public static bool CreateSceneFiles(Node node, string pathString)
+    public static bool Create(Node node, string pathString)
     {
         if (!DirAccess.DirExistsAbsolute(pathString))
             return false;
@@ -16,7 +16,7 @@ public static class FileWorker
         var resetPositionKey = (Variant)new StringName(Properties.ResetPosition);
         var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Properties.OriginPosition};
         node.SetMeta(Properties.BlenderMetaKey, extrasDictionary);
-        if (!PropertyWorker.ApplyDictionaryProperties(node, Properties.BlenderMetaKey))
+        if (!PropertyApplicator.Apply(node, Properties.BlenderMetaKey))
             PluginLogger.Log(LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
         // Pack and save file
         var packedNode = new PackedScene();

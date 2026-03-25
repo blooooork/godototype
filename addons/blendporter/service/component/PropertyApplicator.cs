@@ -5,9 +5,9 @@ using System.Linq;
 
 namespace blendporter.dispatcher.worker;
 
-public static class PropertyWorker
+public static class PropertyApplicator
 {
-    public static bool ApplyDictionaryProperties(Node node, StringName dictionaryName)
+    public static bool Apply(Node node, StringName dictionaryName)
     {
         // Validate dictionary is expected structure for custom properties
         if (!ValidationWorker.Validate(dictionaryName, ValidationWorker.Type.DictionaryName))
