@@ -4,39 +4,34 @@ using blendporter.definition;
 
 namespace blendporter.dispatcher.worker;
 
-public class FileWorker : IWorker
+public static class FileWorker
 {
-    private static readonly PropertyWorker PropertyWorker = new();
     private const string SceneExtension = ".tscn";
-    #nullable enable
-    public bool Work(object incomingObject, object? details)
+    public static bool CreateSceneFiles(Node3D node, string pathString)
     {
-        if (incomingObject is not Node3D node)
-            return false;
-        if (details is not string detailString || !DirAccess.DirExistsAbsolute(detailString))
+        if (!DirAccess.DirExistsAbsolute(pathString))
             return false;
         SetOwnerRecursive(node, node);
         // Reset node position to 0, 0, 0
         var resetPositionKey = (Variant)new StringName(Properties.ResetPosition);
         var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Properties.OriginPosition};
         node.SetMeta(Properties.BlenderMetaKey, extrasDictionary);
-        if (!PropertyWorker.Work(node, Properties.BlenderMetaKey))
+        if (!PropertyWorker.ApplyDictionaryProperties(node, Properties.BlenderMetaKey))
             PluginLogger.Log(LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
         // Pack and save file
         var packedNode = new PackedScene();
         packedNode.Pack(node);
-        var filePath = $"{details}/{node.Name}{SceneExtension}";
+        var filePath = $"{pathString}/{node.Name}{SceneExtension}";
         // Iterate through numbering filenames if you have to
         var i = 1;
         while (FileAccess.FileExists(filePath))
-            filePath = $"{details}/{node.Name}-{i++}{SceneExtension}";
+            filePath = $"{pathString}/{node.Name}-{i++}{SceneExtension}";
         var error = ResourceSaver.Save(packedNode, filePath);
         if (error == Error.Ok)
             return true;
         PluginLogger.Log(LogLevel.Error, $"Scene could not be created. Failed with error \"{error.ToString()}\"");
         return false;
     }
-    #nullable disable
 
     private static void SetOwnerRecursive(Node node, Node owner)
     {

@@ -11,16 +11,15 @@ public class SceneDispatcher : IDispatcher
 {
     private string _outputPath;
     private static readonly DirectoryDispatcher DirectoryDispatcher = new();
-    private static readonly FileWorker FileWorker = new();
 
     public bool Dispatch(object incomingObject)
     {
         if(incomingObject is not  Node3D node)
             return false;
-        var children = new Array<Node>();
+        var children = new Array<Node3D>();
         foreach (var child in node.GetChildren())
         {
-            var clonedChild = child.Duplicate();
+            var clonedChild = (Node3D)child.Duplicate();
             children.Add(clonedChild);
         }
         if (children.Count == 0)
@@ -34,8 +33,8 @@ public class SceneDispatcher : IDispatcher
         }
         // Output main node and children as scene files
         _outputPath = DirectoryDispatcher.OutputPath;
-        var successCount = FileWorker.Work(node, _outputPath) ? 1 : 0;
-        successCount += children.Count(c => FileWorker.Work(c, _outputPath));
+        var successCount = FileWorker.CreateSceneFiles(node, _outputPath) ? 1 : 0;
+        successCount += children.Count(c => FileWorker.CreateSceneFiles(c, _outputPath));
         var successString = $"{successCount} files created from node \"{node.Name}\"";
         PluginLogger.Log(LogLevel.Info, $"{successString}");
         return successCount > 0;

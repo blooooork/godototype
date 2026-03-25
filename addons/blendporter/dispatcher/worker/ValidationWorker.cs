@@ -5,7 +5,7 @@ using blendporter.definition;
 
 namespace blendporter.dispatcher.worker;
 
-public class ValidationWorker : IWorker
+public static class ValidationWorker
 {
     public enum Type
     {
@@ -13,12 +13,9 @@ public class ValidationWorker : IWorker
         DictionaryName
     }
     
-    #nullable enable
-    public bool Work(object incomingObject, object? details)
+    public static bool Validate(object incomingObject, Type validationType)
     {
-        if (details is not Type detailsType)
-            return false;
-        switch (detailsType)
+        switch (validationType)
         {
             case Type.DictionaryName:
                 if (incomingObject is not StringName name)
@@ -44,5 +41,4 @@ public class ValidationWorker : IWorker
                 return false;
         }
     }
-    #nullable disable
 }

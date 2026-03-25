@@ -5,19 +5,12 @@ using System.Linq;
 
 namespace blendporter.dispatcher.worker;
 
-public class PropertyWorker : IWorker
+public static class PropertyWorker
 {
-    private static readonly ValidationWorker ValidationWorker = new();
-
-    #nullable enable
-    public bool Work(object incomingObject, object? details)
+    public static bool ApplyDictionaryProperties(Node3D node, StringName dictionaryName)
     {
-        if (incomingObject is not Node3D node)
-            return false;
-        if (details is not StringName dictionaryName)
-            return false;
         // Validate dictionary is expected structure for custom properties
-        if (!ValidationWorker.Work(dictionaryName, ValidationWorker.Type.DictionaryName))
+        if (!ValidationWorker.Validate(dictionaryName, ValidationWorker.Type.DictionaryName))
             return false;
         var propDictionary = (Godot.Collections.Dictionary)Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName));
         if (propDictionary == null || propDictionary.Count == 0)
@@ -43,5 +36,4 @@ public class PropertyWorker : IWorker
         PluginLogger.Log(LogLevel.Debug, $"Metadata applied for \"[{node.GetType().Name}] {node.Name}\": {props}");
         return true;
     }
-    #nullable disable
 }
