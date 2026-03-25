@@ -5,12 +5,13 @@ using System.Diagnostics;
 
 namespace blendporter.dispatcher;
 
-public class PluginLogger
+public static class PluginLogger
 {
     public static void Log(LogLevel level, string msg)
     {
         var caller = new StackFrame(1).GetMethod()?.DeclaringType?.Name ?? "Unknown";
-        var logLevel = GetLogLevel();
+        var logLevel = (LogLevel)(SettingService.GetSetting(Settings.NameDictionary[Settings.LogLevelSetting])?.AsInt32()
+                                  ?? (int)LogLevel.Unknown); 
         if (logLevel < level)
             return;
         var logString = $"{level} - [{caller}]: {msg}";
@@ -30,20 +31,5 @@ public class PluginLogger
             default:
                 return;
         }
-    }
-    
-    private static LogLevel GetLogLevel()
-    {
-        var logLevel = SettingService.GetSetting(Settings.NameDictionary[Settings.LogLevelSetting]);
-        if (logLevel == null)
-            return LogLevel.Unknown;
-        return (LogLevel)logLevel.Value.AsInt32();
-    }
-    
-    // TODO This should be a part of SettingRegistry as a whole
-    public static void SetLogLevel(LogLevel logLevel)
-    {
-        SettingService.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
-        ProjectSettings.SetSetting(Settings.LogLevelSetting, (int)logLevel);
     }
 }

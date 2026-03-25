@@ -1,18 +1,16 @@
 using blendporter.definition;
 using Godot;
-using System.Collections.Generic;
 
 namespace blendporter.registry;
 
 public static class SettingService
 {
-    public static bool Register()
+    public static void Register()
     {
         if (Settings.All.Length == 0)
-            return false;
+            return;
         foreach (var setting in Settings.All)
             Register(setting);
-        return true;
     }
     
     public static bool Register(SettingDefinition setting)
@@ -20,7 +18,7 @@ public static class SettingService
         if (!Settings.NameDictionary.ContainsKey(setting.Name))
             return false;
         if (!ProjectSettings.HasSetting(setting.Name))
-            ProjectSettings.SetSetting(setting.Name, setting.DefaultValue);
+            ProjectSettings.SetSetting(setting.Name, setting.SettingValue);
         ProjectSettings.AddPropertyInfo(new Godot.Collections.Dictionary
         {
             {Settings.SettingNameKey, setting.Name},
@@ -31,39 +29,19 @@ public static class SettingService
         return true;
     }
 
-    public static bool Register(List<SettingDefinition> settings)
-    {
-        if (settings.Count == 0)
-            return false;
-        foreach (var setting in settings)
-            Register(setting);
-        return true;
-    }
-
-    public static bool Unregister()
+    public static void Unregister()
     {
         if (Settings.All.Length == 0)
-            return false;
+            return ;
         foreach (var setting in Settings.All)
             Unregister(setting);
-        return true;
     }
     
-    public static bool Unregister(SettingDefinition setting)
+    private static void Unregister(SettingDefinition setting)
     {
         if (ProjectSettings.HasSetting(setting.Name))
-            return false;
+            return;
         ProjectSettings.Clear(setting.Name);
-        return true;
-    }
-
-    public static bool Unregister(List<SettingDefinition> settings)
-    {
-        if(settings.Count == 0)
-            return false;
-        foreach (var setting in settings)
-            Unregister(setting);
-        return true;
     }
     
     #nullable enable
@@ -74,4 +52,13 @@ public static class SettingService
         return ProjectSettings.GetSetting(setting.Name);
     }
     #nullable disable
+
+    public static void SetSetting(SettingDefinition setting, Variant value)
+    {
+        if (!Settings.NameDictionary.ContainsKey(setting.Name))
+            return;
+        if (!ProjectSettings.HasSetting(setting.Name))
+            Register(setting);
+        ProjectSettings.SetSetting(setting.Name, value);
+    }
 }

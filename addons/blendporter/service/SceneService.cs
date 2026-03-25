@@ -40,11 +40,4 @@ public static class SceneService
     {
         _outputPath = null;
     }
-
-    // TODO This should be something in SettingRegistry
-    public static bool IsSceneCreationEnabled()
-    {
-        var creationEnabled = SettingService.GetSetting(Settings.NameDictionary[Settings.CreateScenesSetting]);
-        return creationEnabled != null && creationEnabled.Value.AsBool();
-    }
 }
