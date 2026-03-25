@@ -1,44 +1,36 @@
 using blendporter.definition;
 using blendporter.registry;
 using Godot;
-using System;
+using System.Diagnostics;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.dispatcher;
 
-public class LogWorker : IWorker
+public class PluginLogger
 {
-    #nullable enable
-    
-    public bool Work(object incomingObject, object? details)
+    public static void Log(LogLevel level, string msg)
     {
-        if (incomingObject is not LogLevel incomingLevel || details is not ValueTuple<string, string> incomingTuple)
-            return false;
-        var incomingCaller =  incomingTuple.Item1;
-        var incomingLog = incomingTuple.Item2;
+        var caller = new StackFrame(1).GetMethod()?.DeclaringType?.Name ?? "Unknown";
         var logLevel = GetLogLevel();
-        if (logLevel < incomingLevel)
-            return false;
-        var logString = $"{incomingLevel} - [{incomingCaller}]: {incomingLog}";
-        switch (incomingLevel)
+        if (logLevel < level)
+            return;
+        var logString = $"{level} - [{caller}]: {msg}";
+        switch (level)
         {
             case LogLevel.Error:
                 GD.PushError(logString);
-                break;
+                return;
             case LogLevel.Warning:
                 GD.PushWarning(logString);
-                break;
+                return;
             case LogLevel.Info:
             case LogLevel.Debug:
                 GD.Print(logString);
-                break;
+                return;
             case LogLevel.Unknown:
             default:
-                return false;
+                return;
         }
-        return true;
     }
-    
-    #nullable disable
     
     private static LogLevel GetLogLevel()
     {
@@ -48,12 +40,10 @@ public class LogWorker : IWorker
         return (LogLevel)logLevel.Value.AsInt32();
     }
     
-
+    // TODO This should be a part of SettingRegistry as a whole
     public static void SetLogLevel(LogLevel logLevel)
     {
         SettingRegistry.Register(Settings.NameDictionary[Settings.LogLevelSetting]);
         ProjectSettings.SetSetting(Settings.LogLevelSetting, (int)logLevel);
     }
-    
-
 }

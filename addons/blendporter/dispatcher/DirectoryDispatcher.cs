@@ -5,7 +5,6 @@ namespace blendporter.dispatcher;
 
 public class DirectoryDispatcher : IDispatcher
 {
-    private static readonly LogDispatcher LogDispatcher = new();
     private const string BasePath = "res://blendporter";
     public static string OutputPath { get; set; }
     
@@ -17,8 +16,8 @@ public class DirectoryDispatcher : IDispatcher
         var error = DirAccess.MakeDirRecursiveAbsolute(OutputPath);
         if (error == Error.Ok)
             return true;
-        LogDispatcher.Dispatch((LogLevel.Error,
-            $"Directory could not be created. Failed with error \"{error.ToString()}\""));
+        PluginLogger.Log(LogLevel.Error,
+            $"Directory could not be created. Failed with error \"{error.ToString()}\"");
         return false;
     }
 

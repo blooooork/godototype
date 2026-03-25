@@ -6,7 +6,7 @@ namespace blendporter.definition;
 
 public static class Settings
 {
-    public const LogLevel DefaultLogLevel = LogLevel.Debug;
+    private const LogLevel DefaultLogLevel = LogLevel.Debug;
     private const string LogLevelsString = "Error,Warning,Info,Debug";
     
     // Setting names

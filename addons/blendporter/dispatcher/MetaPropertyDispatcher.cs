@@ -7,7 +7,6 @@ namespace blendporter.dispatcher;
 
 public class MetaPropertyDispatcher: IDispatcher
 {
-    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly ValidationWorker ValidationWorker = new ();
     private static readonly PropertyWorker PropertyWorker = new ();
     public bool Dispatch(object incomingObject)
@@ -22,7 +21,7 @@ public class MetaPropertyDispatcher: IDispatcher
         var successCount = ApplyProperty(node) ? 1 : 0;
         successCount += children.Sum(c => ApplyProperty(c) ? 1 : 0);
         var successLog = $"{successCount} nodes of \"{node.Name}\" have been updated with meta properties";
-        LogDispatcher.Dispatch((LogLevel.Debug, successLog));
+        PluginLogger.Log(LogLevel.Debug, successLog);
         return successCount > 0;
     }
 

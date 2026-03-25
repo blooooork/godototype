@@ -6,7 +6,6 @@ namespace blendporter.dispatcher.worker;
 
 public class FileWorker : IWorker
 {
-    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly PropertyWorker PropertyWorker = new();
     private const string SceneExtension = ".tscn";
     #nullable enable
@@ -22,7 +21,7 @@ public class FileWorker : IWorker
         var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Properties.OriginPosition};
         node.SetMeta(Properties.BlenderMetaKey, extrasDictionary);
         if (!PropertyWorker.Work(node, Properties.BlenderMetaKey))
-            LogDispatcher.Dispatch((LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed"));
+            PluginLogger.Log(LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
         // Pack and save file
         var packedNode = new PackedScene();
         packedNode.Pack(node);
@@ -34,7 +33,7 @@ public class FileWorker : IWorker
         var error = ResourceSaver.Save(packedNode, filePath);
         if (error == Error.Ok)
             return true;
-        LogDispatcher.Dispatch((LogLevel.Error, $"Scene could not be created. Failed with error \"{error.ToString()}\""));
+        PluginLogger.Log(LogLevel.Error, $"Scene could not be created. Failed with error \"{error.ToString()}\"");
         return false;
     }
     #nullable disable

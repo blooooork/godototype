@@ -11,7 +11,6 @@ public class SceneDispatcher : IDispatcher
 {
     private string _outputPath;
     private static readonly DirectoryDispatcher DirectoryDispatcher = new();
-    private static readonly LogDispatcher LogDispatcher = new ();
     private static readonly FileWorker FileWorker = new();
 
     public bool Dispatch(object incomingObject)
@@ -30,7 +29,7 @@ public class SceneDispatcher : IDispatcher
         if (!DirectoryDispatcher.Dispatch(node))
         {
             var errorString = $"Output directory for scene \"{node.Name}\" couldn't be created";
-            LogDispatcher.Dispatch((LogLevel.Error, errorString));
+            PluginLogger.Log(LogLevel.Error, errorString);
             return false;
         }
         // Output main node and children as scene files
@@ -38,7 +37,7 @@ public class SceneDispatcher : IDispatcher
         var successCount = FileWorker.Work(node, _outputPath) ? 1 : 0;
         successCount += children.Count(c => FileWorker.Work(c, _outputPath));
         var successString = $"{successCount} files created from node \"{node.Name}\"";
-        LogDispatcher.Dispatch((LogLevel.Info, $"{successString}"));
+        PluginLogger.Log(LogLevel.Info, $"{successString}");
         return successCount > 0;
     }
 

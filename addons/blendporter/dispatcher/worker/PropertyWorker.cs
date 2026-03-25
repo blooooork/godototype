@@ -7,7 +7,6 @@ namespace blendporter.dispatcher.worker;
 
 public class PropertyWorker : IWorker
 {
-    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly ValidationWorker ValidationWorker = new();
 
     #nullable enable
@@ -23,7 +22,7 @@ public class PropertyWorker : IWorker
         var propDictionary = (Godot.Collections.Dictionary)Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName));
         if (propDictionary == null || propDictionary.Count == 0)
         {
-            LogDispatcher.Dispatch((LogLevel.Warning, $"{node.Name} did not have a valid property dictionary"));
+            PluginLogger.Log(LogLevel.Warning, $"{node.Name} did not have a valid property dictionary");
             return false;
         }
         var appliedProperties = new Dictionary<string, object>();
@@ -41,7 +40,7 @@ public class PropertyWorker : IWorker
         if (appliedProperties.Count == 0)
             return false;
         var props = string.Join(", ", appliedProperties.Select(kv => $"\"{kv.Key}\": {kv.Value}"));
-        LogDispatcher.Dispatch((LogLevel.Debug, $"Metadata applied for \"[{node.GetType().Name}] {node.Name}\": {props}"));
+        PluginLogger.Log(LogLevel.Debug, $"Metadata applied for \"[{node.GetType().Name}] {node.Name}\": {props}");
         return true;
     }
     #nullable disable

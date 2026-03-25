@@ -7,7 +7,6 @@ namespace blendporter;
 
 public partial class BlendFileProcessor : EditorScenePostImportPlugin
 {
-    private static readonly LogDispatcher LogDispatcher = new();
     private static readonly MetaPropertyDispatcher MetaDispatcher = new ();
     private static readonly SceneDispatcher SceneDispatcher = new ();
     private static readonly DirectoryDispatcher DirectoryDispatcher = new ();
@@ -15,7 +14,7 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
     
     public override void _PostProcess(Node scene)
     {
-        LogDispatcher.Dispatch((LogLevel.Info, $"Beginning post processing of scene {scene.Name}"));
+        PluginLogger.Log(LogLevel.Info, $"Beginning post processing of scene {scene.Name}");
         MetaDispatcher.Dispatch(scene);
         if (SceneDispatcher.IsSceneCreationEnabled())
             SceneDispatcher.Dispatch(scene);
