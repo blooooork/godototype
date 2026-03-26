@@ -22,7 +22,7 @@ public static class MetaPropertyService
 
     private static bool ValidateAndApply(Node node)
     {
-        if (!ValidationWorker.Validate(node, ValidationWorker.Type.MetaData))
+        if (!ObjectValidator.Validate(node, ObjectValidator.Type.MetaData))
             return false;
         // Attempt to apply properties from validated meta dictionary
         var metaList = node.GetMetaList();

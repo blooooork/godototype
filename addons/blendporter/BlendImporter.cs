@@ -2,6 +2,7 @@
 using blendporter.definition;
 using blendporter.registry;
 using blendporter.dispatcher;
+using blendporter.dispatcher.worker;
 using Godot;
 
 namespace blendporter;

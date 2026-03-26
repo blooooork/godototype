@@ -5,7 +5,7 @@ using blendporter.definition;
 
 namespace blendporter.dispatcher.worker;
 
-public static class ValidationWorker
+public static class ObjectValidator
 {
     public enum Type
     {

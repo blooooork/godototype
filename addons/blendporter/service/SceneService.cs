@@ -1,7 +1,6 @@
 using System.Linq;
 using blendporter.definition;
 using blendporter.dispatcher.worker;
-using blendporter.registry;
 using Godot;
 using Godot.Collections;
 
@@ -11,7 +10,22 @@ public static class SceneService
 {
     private static string _outputPath;
 
-    public static void CreateScenes(Node node)
+    public static void CreateScenes(Node scene)
+    {
+        var foundFiles = ImportFileLocator.Find(scene.Name);
+        if (foundFiles.Count != 1)
+        {
+            PluginLogger.Log(LogLevel.Debug, $"Scene {scene.Name} had unexpected import file count of: {foundFiles.Count}");
+            return;
+        }
+        if (FileSettingRegistry.GetSettingFromFile(foundFiles[0], Settings.CreateSceneDefinition) is not { } value)
+            return;
+        var settingValue =  value.AsBool();
+        if (settingValue) 
+            CreateNodeScene(scene);
+    }
+    
+    private static void CreateNodeScene(Node node)
     {
         var children = new Array<Node>();
         foreach (var child in node.GetChildren())

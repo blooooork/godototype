@@ -10,9 +10,9 @@ public static class PropertyApplicator
     public static bool Apply(Node node, StringName dictionaryName)
     {
         // Validate dictionary is expected structure for custom properties
-        if (!ValidationWorker.Validate(dictionaryName, ValidationWorker.Type.DictionaryName))
+        if (!ObjectValidator.Validate(dictionaryName, ObjectValidator.Type.DictionaryName))
             return false;
-        var propDictionary = (Godot.Collections.Dictionary)Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName));
+        var propDictionary = Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName)) as Godot.Collections.Dictionary;
         if (propDictionary == null || propDictionary.Count == 0)
         {
             PluginLogger.Log(LogLevel.Warning, $"{node.Name} did not have a valid property dictionary");
