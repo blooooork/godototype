@@ -1,9 +1,9 @@
 using blendporter.definition;
 using Godot;
 using System.Diagnostics;
-using blendporter.dispatcher.worker;
+using blendporter.service.component;
 
-namespace blendporter.dispatcher;
+namespace blendporter.service;
 
 public static class PluginLogger
 {

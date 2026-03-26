@@ -1,9 +1,9 @@
 using Godot;
 using System.Linq;
 using blendporter.definition;
-using blendporter.dispatcher.worker;
+using blendporter.service.component;
 
-namespace blendporter.dispatcher;
+namespace blendporter.service;
 
 public static class MetaPropertyService
 {

@@ -3,7 +3,7 @@ using blendporter.definition;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
 public static class PropertyApplicator
 {

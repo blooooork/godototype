@@ -1,27 +1,18 @@
 using System.Linq;
 using blendporter.definition;
-using blendporter.dispatcher.worker;
+using blendporter.service.component;
 using Godot;
 using Godot.Collections;
 
-namespace blendporter.dispatcher;
+namespace blendporter.service;
 
 public static class SceneService
 {
     private static string _outputPath;
 
-    public static void CreateScenes(Node scene)
+    public static void CreateScenes(Node scene, bool shouldCreateScenes)
     {
-        var foundFiles = ImportFileLocator.Find(scene.Name);
-        if (foundFiles.Count != 1)
-        {
-            PluginLogger.Log(LogLevel.Debug, $"Scene {scene.Name} had unexpected import file count of: {foundFiles.Count}");
-            return;
-        }
-        if (FileSettingRegistry.GetSettingFromFile(foundFiles[0], Settings.CreateSceneDefinition) is not { } value)
-            return;
-        var settingValue =  value.AsBool();
-        if (settingValue) 
+        if (shouldCreateScenes)
             CreateNodeScene(scene);
     }
     

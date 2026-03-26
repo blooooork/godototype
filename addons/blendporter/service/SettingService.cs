@@ -1,5 +1,5 @@
 using blendporter.definition;
-using blendporter.dispatcher.worker;
+using blendporter.service.component;
 
 namespace blendporter.registry;
 

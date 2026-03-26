@@ -1,7 +1,7 @@
 using blendporter.definition;
 using Godot;
-using blendporter.dispatcher;
-using blendporter.dispatcher.worker;
+using blendporter.service;
+using blendporter.service.component;
 
 namespace blendporter;
 
@@ -11,7 +11,7 @@ public partial class BlendFileProcessor : EditorScenePostImportPlugin
     {
         PluginLogger.Log(LogLevel.Info, $"Beginning post processing of scene {scene.Name}");
         MetaPropertyService.ApplyProperties(scene);
-        SceneService.CreateScenes(scene);
+        SceneService.CreateScenes(scene, GetOptionValue(Settings.CreateScenesSetting).AsBool());
         DirectoryService.Reset();
         SceneService.Reset();
     }

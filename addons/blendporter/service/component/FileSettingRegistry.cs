@@ -1,9 +1,8 @@
 using blendporter.definition;
-using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
 // TODO Need to make sure if a new file is dropped in that we are adding the properties to .import
 // TODO Also need to figure out why metaproperty dictionaries are borked on clone to new scenes

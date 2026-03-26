@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
 public static class ImportFileLocator
 {

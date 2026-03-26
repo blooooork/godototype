@@ -1,7 +1,7 @@
 using blendporter.definition;
 using Godot;
 
-namespace blendporter.dispatcher;
+namespace blendporter.service;
 
 public static class DirectoryService
 {

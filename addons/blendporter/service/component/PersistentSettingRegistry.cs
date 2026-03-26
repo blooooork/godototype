@@ -2,7 +2,7 @@ using System.Linq;
 using blendporter.definition;
 using Godot;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
 public class PersistentSettingRegistry
 {

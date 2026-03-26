@@ -1,8 +1,7 @@
 #if TOOLS
 using blendporter.definition;
 using blendporter.registry;
-using blendporter.dispatcher;
-using blendporter.dispatcher.worker;
+using blendporter.service;
 using Godot;
 
 namespace blendporter;

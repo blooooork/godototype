@@ -2,7 +2,7 @@ using Godot;
 using Godot.Collections;
 using blendporter.definition;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
 public static class SceneCreator
 {
