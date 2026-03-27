@@ -6,7 +6,6 @@ public static class Settings
 {
     public const LogLevel DefaultLogLevel = LogLevel.Warning;
     private const string LogLevelsString = "Error,Warning,Info,Debug";
-    
     // Setting names
     public static readonly StringName LogLevelSetting = new("blendporter/project/log_level");
     public static readonly StringName CreateScenesSetting = new("blendporter/project/create_scenes");
