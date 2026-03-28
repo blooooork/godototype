@@ -12,27 +12,11 @@ public class Properties
     public static readonly IReadOnlyList<StringName> MetaKeys = [BlenderMetaKey];
     // Property names
     public static readonly StringName Transform = new("transform");
-    public static readonly StringName GravityScale = new("gravity_scale");
-    public static readonly StringName Mass = new("mass");
-    public static readonly StringName ResetPosition = new("reset_position");
-    
+
     public static readonly float[] OriginTransform = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
-    public static readonly float[] OriginPosition = [0, 0, 0];
-    
-    // Property Definitions
-    private static readonly PropertyDefinition GravityScaleDefinition = new (
-        GravityScale,
-        typeof(RigidBody3D),
-        Converters.FloatConverter,
-        Applicators.GravityScaleApplicator
-    );
-    private static readonly PropertyDefinition MassDefinition = new (
-        Mass, 
-        typeof(RigidBody3D),
-        Converters.FloatConverter, 
-        Applicators.MassApplicator
-    );
-    
+
+    // Property Definitions — only special-case properties that require custom application logic.
+    // Standard node properties are applied dynamically via DynamicPropertyApplicator.
     private static readonly PropertyDefinition TransformDefinition = new (
         Transform,
         typeof(Node3D),
@@ -40,19 +24,9 @@ public class Properties
         Applicators.TransformApplicator
     );
 
-    private static readonly PropertyDefinition PositionDefinition = new (
-        ResetPosition,
-        typeof(Node3D),
-        Converters.Vector3Converter,
-        Applicators.PositionApplicator
-    );
-    
     private static readonly PropertyDefinition[] PropertyList =
     [
-        GravityScaleDefinition,
-        MassDefinition,
-        TransformDefinition,
-        PositionDefinition
+        TransformDefinition
     ];
 
     public static readonly Dictionary<Type, List<PropertyDefinition>> TypeDictionary =

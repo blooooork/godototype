@@ -63,6 +63,67 @@ public static class NodePropertyAggregator
         };
     }
 
+    public static string BuildEnumString(NodeProperty prop)
+    {
+        const string none = "None";
+        var key = GetPropertyKey(prop.VariantType, prop.ArrayLength);
+        if (key == null) return none;
+        var settable = GetSettableProperties(prop.NodeType);
+        if (!settable.TryGetValue(key, out var matches) || matches.Count == 0) return none;
+        return none + "," + string.Join(",", matches.Select(p => p.Name));
+    }
+
+    public static object? ConvertVariant(Variant value, Type targetType)
+    {
+        if (targetType == typeof(float))  return value.AsSingle();
+        if (targetType == typeof(double)) return (double)value.AsSingle();
+        if (targetType == typeof(int))    return value.AsInt32();
+        if (targetType == typeof(long))   return (long)value.AsInt64();
+        if (targetType == typeof(bool))   return value.AsBool();
+        if (targetType == typeof(string)) return value.AsString();
+        if (targetType == typeof(Vector2))
+        {
+            if (value.VariantType == Godot.Variant.Type.PackedFloat32Array)
+            {
+                var a = value.As<float[]>();
+                return a.Length >= 2 ? new Vector2(a[0], a[1]) : null;
+            }
+            return value.AsVector2();
+        }
+        if (targetType == typeof(Vector3))
+        {
+            if (value.VariantType == Godot.Variant.Type.PackedFloat32Array)
+            {
+                var a = value.As<float[]>();
+                return a.Length >= 3 ? new Vector3(a[0], a[1], a[2]) : null;
+            }
+            return value.AsVector3();
+        }
+        if (targetType == typeof(Color))
+        {
+            if (value.VariantType == Godot.Variant.Type.PackedFloat32Array)
+            {
+                var a = value.As<float[]>();
+                return a.Length >= 4 ? new Color(a[0], a[1], a[2], a[3]) : null;
+            }
+            return value.AsColor();
+        }
+        if (targetType == typeof(Transform3D))
+        {
+            if (value.VariantType == Godot.Variant.Type.PackedFloat32Array)
+            {
+                var a = value.As<float[]>();
+                if (a.Length < 12) return null;
+                return new Transform3D(
+                    new Basis(new Vector3(a[0], a[1], a[2]), new Vector3(a[3], a[4], a[5]), new Vector3(a[6], a[7], a[8])),
+                    new Vector3(a[9], a[10], a[11])
+                );
+            }
+            return value.AsTransform3D();
+        }
+        return null;
+    }
+
     // Maps a property's setter type to all keys under which it should be discoverable.
     // Types that Blender exports as PackedFloat32Array get an additional keyed entry
     // with a LengthRestriction so callers can match by incoming array length.

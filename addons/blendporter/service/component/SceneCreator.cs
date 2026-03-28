@@ -1,5 +1,4 @@
 using Godot;
-using Godot.Collections;
 using blendporter.definition;
 
 namespace blendporter.service.component;
@@ -12,12 +11,9 @@ public static class SceneCreator
         if (!DirAccess.DirExistsAbsolute(pathString))
             return false;
         SetOwnerRecursive(node, node);
-        // Reset node position to 0, 0, 0
-        var resetPositionKey = (Variant)new StringName(Properties.ResetPosition);
-        var extrasDictionary = (Variant)new Dictionary{ [resetPositionKey] = Properties.OriginPosition};
-        node.SetMeta(Properties.BlenderMetaKey, extrasDictionary);
-        if (!PropertyApplicator.Apply(node, Properties.BlenderMetaKey))
-            PluginLogger.Log(LogLevel.Error,$"Node re-centering for \"{node.Name}{SceneExtension}\" failed");
+        // Reset node position to origin before packing
+        if (node is Node3D node3D)
+            node3D.Position = Vector3.Zero;
         // Pack and save file
         var packedNode = new PackedScene();
         packedNode.Pack(node);
