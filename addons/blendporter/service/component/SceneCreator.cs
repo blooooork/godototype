@@ -1,0 +1,39 @@
+using Godot;
+using blendporter.definition;
+
+namespace blendporter.service.component;
+
+public static class SceneCreator
+{
+    private const string SceneExtension = ".tscn";
+    public static bool Create(Node node, string pathString)
+    {
+        if (!DirAccess.DirExistsAbsolute(pathString))
+            return false;
+        SetOwnerRecursive(node, node);
+        // Reset node position to origin before packing
+        if (node is Node3D node3D)
+            node3D.Position = Vector3.Zero;
+        // Pack and save file
+        var packedNode = new PackedScene();
+        packedNode.Pack(node);
+        var filePath = $"{pathString}/{node.Name}{SceneExtension}";
+        // Iterate through numbering filenames if you have to
+        var i = 1;
+        while (FileAccess.FileExists(filePath))
+            filePath = $"{pathString}/{node.Name}-{i++}{SceneExtension}";
+        var error = ResourceSaver.Save(packedNode, filePath);
+        if (error == Error.Ok)
+            return true;
+        PluginLogger.Log(LogLevel.Error, $"Scene could not be created. Failed with error \"{error.ToString()}\"");
+        return false;
+    }
+
+    private static void SetOwnerRecursive(Node node, Node owner)
+    {
+        if(node != owner)
+            node.Owner = owner;
+        foreach (var child in node.GetChildren())
+            SetOwnerRecursive(child, owner);
+    }
+}

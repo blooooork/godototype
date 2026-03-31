@@ -3,27 +3,19 @@ using blendporter.definition;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace blendporter.dispatcher.worker;
+namespace blendporter.service.component;
 
-public class PropertyWorker : IWorker
+public static class PropertyApplicator
 {
-    private static readonly LogDispatcher LogDispatcher = new();
-    private static readonly ValidationWorker ValidationWorker = new();
-
-    #nullable enable
-    public bool Work(object incomingObject, object? details)
+    public static bool Apply(Node node, StringName dictionaryName)
     {
-        if (incomingObject is not Node3D node)
-            return false;
-        if (details is not StringName dictionaryName)
-            return false;
         // Validate dictionary is expected structure for custom properties
-        if (!ValidationWorker.Work(dictionaryName, ValidationWorker.Type.DictionaryName))
+        if (!ObjectValidator.Validate(dictionaryName, ObjectValidator.Type.DictionaryName))
             return false;
-        var propDictionary = (Godot.Collections.Dictionary)Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName));
+        var propDictionary = Converters.DictionaryConverter.Invoke(node.GetMeta(dictionaryName)) as Godot.Collections.Dictionary;
         if (propDictionary == null || propDictionary.Count == 0)
         {
-            LogDispatcher.Dispatch((LogLevel.Warning, $"{node.Name} did not have a valid property dictionary"));
+            PluginLogger.Log(LogLevel.Warning, $"{node.Name} did not have a valid property dictionary");
             return false;
         }
         var appliedProperties = new Dictionary<string, object>();
@@ -41,8 +33,7 @@ public class PropertyWorker : IWorker
         if (appliedProperties.Count == 0)
             return false;
         var props = string.Join(", ", appliedProperties.Select(kv => $"\"{kv.Key}\": {kv.Value}"));
-        LogDispatcher.Dispatch((LogLevel.Debug, $"Metadata applied for \"[{node.GetType().Name}] {node.Name}\": {props}"));
+        PluginLogger.Log(LogLevel.Debug, $"Metadata applied for \"[{node.GetType().Name}] {node.Name}\": {props}");
         return true;
     }
-    #nullable disable
 }
