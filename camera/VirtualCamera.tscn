@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://ccsxgxamw6rrt"]
+
+[ext_resource type="Script" uid="uid://b4jbqjn4nepi" path="res://camera/VirtualCamera.cs" id="1_jxjgs"]
+
+[node name="Camera" type="Camera3D" unique_id=489467468]
+script = ExtResource("1_jxjgs")
