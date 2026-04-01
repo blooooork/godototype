@@ -2,16 +2,20 @@ using System;
 using Godot;
 using godototype.camera;
 
-public partial class VirtualCamera : Camera3D, IVirtualCamera
+public partial class VirtualCamera : Node3D, IVirtualCamera
 {
-    
-    public Transform3D GetDesiredTransform()
+    private Camera3D _camera;
+
+    public override void _Ready()
     {
-        return GlobalTransform;
+        _camera = GetNode<Camera3D>("CameraContainer/Camera");
     }
 
-    public float GetDesiredFov()
+    public Transform3D GetDesiredTransform() => _camera.GlobalTransform;
+    public float GetDesiredFov() => _camera.Fov;
+    public void SetRig(Vector3 position, float yaw)
     {
-        return GetFov();
+        GlobalPosition = position;
+        Rotation = new Vector3(0f, yaw, 0f);
     }
 }

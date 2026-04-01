@@ -21,12 +21,10 @@ environment = SubResource("Environment_5hyia")
 transform = Transform3D(0.8660254, -2.1855694e-08, 0.5, -0.5, -3.7855173e-08, 0.8660254, 0, -1, -4.371139e-08, 220.38712, 230.13887, 0)
 light_energy = 0.704
 
-[node name="SpawnPoint" parent="." unique_id=1910422569 instance=ExtResource("3_8el2m")]
-transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -32.966858, 0.6, 0)
-YOffset = 2.0
-EligibleSpawns = Array[PackedScene]([ExtResource("5_oxjoy")])
-SafeSpawn = true
-SpawnCount = 1
-
 [node name="floor" parent="." unique_id=1439531642 instance=ExtResource("2_8el2m")]
 transform = Transform3D(50, 0, 0, 0, 0.2, 0, 0, 0, 50, 0, -0.1, 0)
+
+[node name="SpawnPoint" parent="." unique_id=1910422569 instance=ExtResource("3_8el2m")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -31.353193, 0.10299847, 3.0095024)
+EligibleSpawns = Array[PackedScene]([ExtResource("5_oxjoy")])
+SpawnCount = 1

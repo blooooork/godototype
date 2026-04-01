@@ -2,5 +2,9 @@
 
 [ext_resource type="Script" uid="uid://b4jbqjn4nepi" path="res://camera/VirtualCamera.cs" id="1_jxjgs"]
 
-[node name="Camera" type="Camera3D" unique_id=489467468]
+[node name="VirtualCamera" type="Node3D" unique_id=1586058199]
 script = ExtResource("1_jxjgs")
+
+[node name="CameraContainer" type="Node3D" parent="." unique_id=2406803]
+
+[node name="Camera" type="Camera3D" parent="CameraContainer" unique_id=512685482]
