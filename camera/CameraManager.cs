@@ -1,6 +1,7 @@
 using blendporter.definition;
 using blendporter.service;
 using Godot;
+using godotconsole;
 using System.Collections.Generic;
 
 namespace godototype.camera;
@@ -71,6 +72,7 @@ public partial class CameraManager : Node
         if (_suitors[^1].Source != oldTop)
         {
             PluginLogger.Log(LogLevel.Debug, $"Camera switched to {CameraName(_suitors[^1].Source)} (priority {priority})");
+            UpdateFocusedEntity();
             StartBlend(blendIn);
         }
 
@@ -88,8 +90,15 @@ public partial class CameraManager : Node
         {
             var newTop = _suitors[^1];
             PluginLogger.Log(LogLevel.Debug, $"Camera switched to {CameraName(newTop.Source)} (priority {newTop.Priority}) after release");
+            UpdateFocusedEntity();
             StartBlend(blendOut);
         }
+    }
+
+    private void UpdateFocusedEntity()
+    {
+        var top = _suitors.Count > 0 ? _suitors[^1].Source : null;
+        StatsManager.FocusedEntity = top is Node n ? n.GetParent() : null;
     }
 
     private static string CameraName(IVirtualCamera cam) =>

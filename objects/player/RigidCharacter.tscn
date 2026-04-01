@@ -10,6 +10,7 @@ radius = 1.0
 [node name="RigidCharacter" type="RigidBody3D" unique_id=1090153355]
 angular_damp = 2.0
 script = ExtResource("1_6v7kc")
+MaxSpeed = 7.0
 
 [node name="chucker" parent="." unique_id=1705303431 instance=ExtResource("1_ckg3v")]
 
@@ -18,11 +19,24 @@ shape = SubResource("SphereShape3D_ch7lj")
 
 [node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_ch7lj")]
 top_level = true
+CameraOffset = Vector3(0, 3, 10)
 
-[node name="CameraContainer" parent="VirtualCamera"]
-transform = Transform3D(1, 0, 0, 0, 0.9659259, 0.25881907, 0, -0.25881907, 0.9659258, 0, 3, 5)
+[node name="GroundRayFront" type="RayCast3D" parent="." unique_id=60740094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0.5)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
 
-[node name="GroundRay" type="RayCast3D" parent="." unique_id=333372573]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16106343, 0)
+[node name="GroundRayRight" type="RayCast3D" parent="." unique_id=1946728079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.759, 0.07, 0)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
+
+[node name="GroundRayLeft" type="RayCast3D" parent="." unique_id=333372573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 0.07, 0)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
+
+[node name="GroundRayBack" type="RayCast3D" parent="." unique_id=2123191164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, -0.5)
 target_position = Vector3(0, -1.2, 0)
 collide_with_areas = true

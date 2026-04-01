@@ -17,7 +17,6 @@ public partial class SpawnPoint : Node3D
     private CollisionShape3D _spawnDetectShape;
     private Aabb[] _eligibleAabbs;
 
-    [Export] public float YOffset { get; set; }
     [Export] public PackedScene[] EligibleSpawns { get; set; }
     [Export] public bool SafeSpawn { get; set; }
     [Export] public int SpawnCount  { get; set; }
@@ -89,7 +88,8 @@ public partial class SpawnPoint : Node3D
 
         var spawnedNode = scene.Instantiate<Node3D>();
         GetTree().Root.AddChild(spawnedNode);
-        spawnedNode.Position = new Vector3(GlobalPosition.X, -aabb.Position.Y + YOffset, GlobalPosition.Z);
+        spawnedNode.Position = new Vector3(GlobalPosition.X, -aabb.Position.Y, GlobalPosition.Z);
+        spawnedNode.Rotation = GlobalRotation;
         PluginLogger.Log(LogLevel.Debug, $"Spawned {scene}");        
         
         _spawnCounter++;

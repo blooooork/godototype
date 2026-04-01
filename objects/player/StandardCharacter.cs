@@ -1,13 +1,16 @@
 using Godot;
-using godototype.camera;
+
 using godototype.constants;
+using godototype.camera;
 using godototype.input;
 using godototype.world;
 
-namespace objects.player;
+namespace godototype.objects.player;
 
 public partial class StandardCharacter : CharacterBody3D, IGravityBody
 {
+    [Export] public float JumpForce { get; set; } = 8f;
+
     private IVirtualCamera _virtualCamera;
     private CameraClaim _claim;
 
@@ -41,6 +44,6 @@ public partial class StandardCharacter : CharacterBody3D, IGravityBody
     private void Jump()
     {
         if (IsOnFloor())
-            Velocity = new Vector3(Velocity.X, GameSettings.JumpForce, Velocity.Z);
+            Velocity = new Vector3(Velocity.X, JumpForce, Velocity.Z);
     }
 }

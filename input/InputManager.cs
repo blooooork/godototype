@@ -55,8 +55,11 @@ public partial class InputManager : Node
             };
         }
 
-        foreach (var (action, state) in _actions)
+        // Snapshot keys so callbacks that call Subscribe/Register don't mutate _actions mid-loop.
+        var snapshot = new List<string>(_actions.Keys);
+        foreach (var action in snapshot)
         {
+            var state = _actions[action];
             if (state.JustPressed && _onJustPressed.TryGetValue(action, out var jpList))
                 for (var i = jpList.Count - 1; i >= 0; i--) jpList[i](action);
             if (state.JustReleased && _onJustReleased.TryGetValue(action, out var jrList))

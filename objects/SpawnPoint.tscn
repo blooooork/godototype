@@ -27,4 +27,4 @@ monitorable = false
 shape = SubResource("BoxShape3D_spawn")
 
 [node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_kl1y4")]
-transform = Transform3D(1, 0, 0, 0, 0.86602545, 0.5, 0, -0.5, 0.8660253, 0, 2, 3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0, 0, 0)
