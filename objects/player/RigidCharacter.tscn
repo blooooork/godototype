@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://71uy04qb1qgu"]
 
+[ext_resource type="Script" uid="uid://brfkturdmlbyu" path="res://objects/player/RigidCharacter.cs" id="1_6v7kc"]
 [ext_resource type="PackedScene" uid="uid://boi2v6mx55n65" path="res://blendporter/pawn/chucker.tscn" id="1_ckg3v"]
 [ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="2_ch7lj"]
 
@@ -8,6 +9,9 @@ radius = 1.1
 height = 3.4
 
 [node name="RigidCharacter" type="RigidBody3D" unique_id=1090153355]
+axis_lock_angular_x = true
+axis_lock_angular_z = true
+script = ExtResource("1_6v7kc")
 
 [node name="chucker" parent="." unique_id=1705303431 instance=ExtResource("1_ckg3v")]
 
@@ -17,3 +21,8 @@ shape = SubResource("CapsuleShape3D_ch7lj")
 
 [node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_ch7lj")]
 transform = Transform3D(1, 0, 0, 0, 0.9659259, 0.25881907, 0, -0.25881907, 0.9659258, 0, 3, 5)
+
+[node name="GroundRay" type="RayCast3D" parent="." unique_id=333372573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16106343, 0)
+target_position = Vector3(0, -1.5, 0)
+collide_with_areas = true

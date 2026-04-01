@@ -2,5 +2,11 @@ namespace godototype.constants;
 
 public enum GameAction
 {
-    Jump
+    Jump,
+    Forward,
+    Backward,
+    StrafeLeft,
+    StrafeRight,
+    RotateLeft,
+    RotateRight
 }

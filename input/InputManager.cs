@@ -18,6 +18,7 @@ namespace godototype.input;
 public partial class InputManager : Node
 {
     public static InputManager Instance { get; private set; }
+    public static bool Suppressed { get; set; }
 
     private static readonly Dictionary<string, ActionState> _actions = new();
     private static readonly Dictionary<string, List<Action<string>>> _onJustPressed = new();
@@ -41,6 +42,8 @@ public partial class InputManager : Node
 
     public override void _Process(double delta)
     {
+        if (Suppressed) return;
+
         foreach (var action in _actions.Keys)
         {
             _actions[action] = new ActionState

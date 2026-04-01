@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bvn42lokfn1se"]
 
 [ext_resource type="Script" uid="uid://dmlf0u8isr8fm" path="res://scenes/Gym.cs" id="1_5hyia"]
-[ext_resource type="PackedScene" uid="uid://bh3xg5qlrlilb" path="res://blendporter/pipeline_test/floor.tscn" id="2_8el2m"]
+[ext_resource type="PackedScene" uid="uid://bh3xg5qlrlilb" path="res://objects/building/floor.tscn" id="2_8el2m"]
 [ext_resource type="PackedScene" uid="uid://cg2160566qqkh" path="res://objects/SpawnPoint.tscn" id="3_8el2m"]
-[ext_resource type="PackedScene" uid="uid://dhcwedkusdl74" path="res://objects/player/StandardCharacter.tscn" id="4_wp3es"]
+[ext_resource type="PackedScene" uid="uid://71uy04qb1qgu" path="res://objects/player/RigidCharacter.tscn" id="5_oxjoy"]
 
 [sub_resource type="Environment" id="Environment_5hyia"]
 background_energy_multiplier = 1.26
@@ -14,9 +14,6 @@ ambient_light_energy = 5.85
 [node name="Gym" type="Node3D" unique_id=906177654]
 script = ExtResource("1_5hyia")
 
-[node name="floor" parent="." unique_id=1439531642 instance=ExtResource("2_8el2m")]
-transform = Transform3D(50, 0, 0, 0, 0.8, 0, 0, 0, 50, 0, -0.2, 0)
-
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1300152868]
 environment = SubResource("Environment_5hyia")
 
@@ -26,4 +23,10 @@ light_energy = 0.704
 
 [node name="SpawnPoint" parent="." unique_id=1910422569 instance=ExtResource("3_8el2m")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -32.966858, 0.6, 0)
-EligibleSpawns = Array[PackedScene]([ExtResource("4_wp3es")])
+YOffset = 2.0
+EligibleSpawns = Array[PackedScene]([ExtResource("5_oxjoy")])
+SafeSpawn = true
+SpawnCount = 1
+
+[node name="floor" parent="." unique_id=1439531642 instance=ExtResource("2_8el2m")]
+transform = Transform3D(50, 0, 0, 0, 0.2, 0, 0, 0, 50, 0, -0.1, 0)
