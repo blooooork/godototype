@@ -9,5 +9,6 @@ public enum GameAction
     StrafeRight,
     RotateLeft,
     RotateRight,
-    Sprint
+    Sprint,
+    Crouch
 }
