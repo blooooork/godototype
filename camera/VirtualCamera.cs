@@ -22,11 +22,19 @@ public partial class VirtualCamera : Node3D, IVirtualCamera
     }
 
     private Camera3D _camera;
+    private Node3D _focus;
 
     public override void _Ready()
     {
         _camera = GetNode<Camera3D>("CameraContainer/Camera");
         ApplyToContainer();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_focus == null) return;
+        var fwd = _focus.GlobalTransform.Basis.Z;
+        SetRig(_focus.GlobalPosition, Mathf.Atan2(fwd.X, fwd.Z));
     }
 
     private void ApplyToContainer()
@@ -44,4 +52,6 @@ public partial class VirtualCamera : Node3D, IVirtualCamera
         GlobalPosition = position;
         Rotation = new Vector3(0f, yaw, 0f);
     }
+    public void SetFocus(Node3D target) => _focus = target;
+    public void ClearFocus() => _focus = null;
 }

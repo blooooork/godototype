@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bvn42lokfn1se"]
 
-[ext_resource type="Script" uid="uid://dmlf0u8isr8fm" path="res://scenes/Gym.cs" id="1_5hyia"]
-[ext_resource type="PackedScene" uid="uid://bh3xg5qlrlilb" path="res://objects/building/floor.tscn" id="2_8el2m"]
-[ext_resource type="PackedScene" uid="uid://cg2160566qqkh" path="res://objects/SpawnPoint.tscn" id="3_8el2m"]
-[ext_resource type="PackedScene" uid="uid://71uy04qb1qgu" path="res://objects/player/RigidCharacter.tscn" id="5_oxjoy"]
+[ext_resource type="Script" uid="uid://dmlf0u8isr8fm" path="res://scenes/Gym.cs" id="1_qunvx"]
+[ext_resource type="PackedScene" uid="uid://bh3xg5qlrlilb" path="res://objects/building/floor.tscn" id="2_f7ncc"]
+[ext_resource type="PackedScene" uid="uid://cg2160566qqkh" path="res://objects/SpawnPoint.tscn" id="3_xdqhp"]
+[ext_resource type="PackedScene" uid="uid://d276sd51losjc" path="res://objects/player/RagdollCharacter.tscn" id="4_kadr7"]
 
 [sub_resource type="Environment" id="Environment_5hyia"]
 background_energy_multiplier = 1.26
@@ -12,7 +12,7 @@ ambient_light_color = Color(0, 0.6062704, 0.6066772, 1)
 ambient_light_energy = 5.85
 
 [node name="Gym" type="Node3D" unique_id=906177654]
-script = ExtResource("1_5hyia")
+script = ExtResource("1_qunvx")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1300152868]
 environment = SubResource("Environment_5hyia")
@@ -21,10 +21,10 @@ environment = SubResource("Environment_5hyia")
 transform = Transform3D(0.8660254, -2.1855694e-08, 0.5, -0.5, -3.7855173e-08, 0.8660254, 0, -1, -4.371139e-08, 220.38712, 230.13887, 0)
 light_energy = 0.704
 
-[node name="floor" parent="." unique_id=1439531642 instance=ExtResource("2_8el2m")]
+[node name="floor" parent="." unique_id=1439531642 instance=ExtResource("2_f7ncc")]
 transform = Transform3D(50, 0, 0, 0, 0.2, 0, 0, 0, 50, 0, -0.1, 0)
 
-[node name="SpawnPoint" parent="." unique_id=1910422569 instance=ExtResource("3_8el2m")]
+[node name="SpawnPoint" parent="." unique_id=1910422569 instance=ExtResource("3_xdqhp")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -31.353193, 0.10299847, 3.0095024)
-EligibleSpawns = Array[PackedScene]([ExtResource("5_oxjoy")])
+EligibleSpawns = Array[PackedScene]([ExtResource("4_kadr7")])
 SpawnCount = 1

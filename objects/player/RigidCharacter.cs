@@ -1,3 +1,4 @@
+using System;
 using godototype.constants;
 using Godot;
 using godotconsole;
@@ -30,29 +31,56 @@ public partial class RigidCharacter : RigidBody3D
     private float _rotateInput;
     private bool _isSprinting;
 
+    private Action<string> _onJump;
+    private Action<string> _onSprintStart;
+    private Action<string> _onSprintEnd;
+    private Action<string> _onForwardPressed;
+    private Action<string> _onForwardReleased;
+    private Action<string> _onBackwardPressed;
+    private Action<string> _onBackwardReleased;
+    private Action<string> _onStrafeLeftPressed;
+    private Action<string> _onStrafeLeftReleased;
+    private Action<string> _onStrafeRightPressed;
+    private Action<string> _onStrafeRightReleased;
+    private Action<string> _onRotateLeftPressed;
+    private Action<string> _onRotateLeftReleased;
+    private Action<string> _onRotateRightPressed;
+    private Action<string> _onRotateRightReleased;
+
     public override void _EnterTree()
     {
         _groundRayFront = GetNode<RayCast3D>("GroundRayFront");
-        _groundRayRight     = GetNode<RayCast3D>("GroundRayRight");
-        _groundRayLeft     = GetNode<RayCast3D>("GroundRayLeft");
-        _groundRayBack     = GetNode<RayCast3D>("GroundRayBack");
-        _virtualCamera = GetNode<IVirtualCamera>("VirtualCamera");
-        _claim = CameraManager.Instance.Request(_virtualCamera, priority: 20);
+        _groundRayRight = GetNode<RayCast3D>("GroundRayRight");
+        _groundRayLeft  = GetNode<RayCast3D>("GroundRayLeft");
+        _groundRayBack  = GetNode<RayCast3D>("GroundRayBack");
+        _virtualCamera  = GetNode<IVirtualCamera>("VirtualCamera");
+        _claim          = CameraManager.Instance.Request(_virtualCamera, priority: 20);
+        _virtualCamera.SetFocus(this);
 
-        InputManager.Subscribe(nameof(GameAction.Jump),        onJustPressed:  _ => Jump());
-        InputManager.Subscribe(nameof(GameAction.Sprint),      onJustPressed: _ => SprintStart(),        onJustReleased: _ => SprintEnd());
-        InputManager.Subscribe(nameof(GameAction.Forward),     onPressed:      _ => _forwardInput =  1f, onJustReleased: _ => _forwardInput = 0f);
-        InputManager.Subscribe(nameof(GameAction.Backward),    onPressed:      _ => _forwardInput = -1f, onJustReleased: _ => _forwardInput = 0f);
-        InputManager.Subscribe(nameof(GameAction.StrafeLeft),  onPressed:      _ => _strafeInput  = -1f, onJustReleased: _ => _strafeInput  = 0f);
-        InputManager.Subscribe(nameof(GameAction.StrafeRight), onPressed:      _ => _strafeInput  =  1f, onJustReleased: _ => _strafeInput  = 0f);
-        InputManager.Subscribe(nameof(GameAction.RotateLeft),  onPressed:      _ => _rotateInput  =  1f, onJustReleased: _ => _rotateInput  = 0f);
-        InputManager.Subscribe(nameof(GameAction.RotateRight), onPressed:      _ => _rotateInput  = -1f, onJustReleased: _ => _rotateInput  = 0f);
+        InputManager.Subscribe(nameof(GameAction.Jump),        onJustPressed:  _onJump               = _ => Jump());
+        InputManager.Subscribe(nameof(GameAction.Sprint),      onJustPressed:  _onSprintStart         = _ => SprintStart(),   onJustReleased: _onSprintEnd           = _ => SprintEnd());
+        InputManager.Subscribe(nameof(GameAction.Forward),     onPressed:      _onForwardPressed      = _ => _forwardInput =  1f, onJustReleased: _onForwardReleased  = _ => _forwardInput = 0f);
+        InputManager.Subscribe(nameof(GameAction.Backward),    onPressed:      _onBackwardPressed     = _ => _forwardInput = -1f, onJustReleased: _onBackwardReleased = _ => _forwardInput = 0f);
+        InputManager.Subscribe(nameof(GameAction.StrafeLeft),  onPressed:      _onStrafeLeftPressed   = _ => _strafeInput  = -1f, onJustReleased: _onStrafeLeftReleased  = _ => _strafeInput = 0f);
+        InputManager.Subscribe(nameof(GameAction.StrafeRight), onPressed:      _onStrafeRightPressed  = _ => _strafeInput  =  1f, onJustReleased: _onStrafeRightReleased = _ => _strafeInput = 0f);
+        InputManager.Subscribe(nameof(GameAction.RotateLeft),  onPressed:      _onRotateLeftPressed   = _ => _rotateInput  =  1f, onJustReleased: _onRotateLeftReleased  = _ => _rotateInput = 0f);
+        InputManager.Subscribe(nameof(GameAction.RotateRight), onPressed:      _onRotateRightPressed  = _ => _rotateInput  = -1f, onJustReleased: _onRotateRightReleased = _ => _rotateInput = 0f);
+
         StatsManager.Register(this, "speed", () => $"{LinearVelocity.Length():F1} m/s");
         base._EnterTree();
     }
 
     public override void _ExitTree()
     {
+        InputManager.Unsubscribe(nameof(GameAction.Jump),        onJustPressed:  _onJump);
+        InputManager.Unsubscribe(nameof(GameAction.Sprint),      onJustPressed:  _onSprintStart,        onJustReleased: _onSprintEnd);
+        InputManager.Unsubscribe(nameof(GameAction.Forward),     onPressed:      _onForwardPressed,     onJustReleased: _onForwardReleased);
+        InputManager.Unsubscribe(nameof(GameAction.Backward),    onPressed:      _onBackwardPressed,    onJustReleased: _onBackwardReleased);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeLeft),  onPressed:      _onStrafeLeftPressed,  onJustReleased: _onStrafeLeftReleased);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeRight), onPressed:      _onStrafeRightPressed, onJustReleased: _onStrafeRightReleased);
+        InputManager.Unsubscribe(nameof(GameAction.RotateLeft),  onPressed:      _onRotateLeftPressed,  onJustReleased: _onRotateLeftReleased);
+        InputManager.Unsubscribe(nameof(GameAction.RotateRight), onPressed:      _onRotateRightPressed, onJustReleased: _onRotateRightReleased);
+        _virtualCamera.ClearFocus();
         CameraManager.Instance.Release(_claim);
         StatsManager.Unregister(this);
         base._ExitTree();
@@ -63,7 +91,6 @@ public partial class RigidCharacter : RigidBody3D
         ApplyStabilization();
         ApplyMovement();
         ApplyTurning();
-        UpdateCameraRig();
     }
 
     // Pulls the ball's up vector back toward world up each frame.
@@ -113,12 +140,6 @@ public partial class RigidCharacter : RigidBody3D
     {
         if (_rotateInput == 0f) return;
         AngularVelocity = new Vector3(AngularVelocity.X, _rotateInput * RotateSpeed, AngularVelocity.Z);
-    }
-
-    private void UpdateCameraRig()
-    {
-        var fwd = Transform.Basis.Z;
-        _virtualCamera.SetRig(GlobalPosition, Mathf.Atan2(fwd.X, fwd.Z));
     }
 
     private void Jump()

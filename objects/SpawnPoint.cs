@@ -20,7 +20,9 @@ public partial class SpawnPoint : Node3D
     [Export] public PackedScene[] EligibleSpawns { get; set; }
     [Export] public bool SafeSpawn { get; set; }
     [Export] public int SpawnCount  { get; set; }
+    [Export] public Vector3 SpawnOffset { get; set; } = Vector3.Zero;
     private int _spawnCounter;
+    private Action<string> _onJump;
 
     public override void _EnterTree()
     {
@@ -28,7 +30,8 @@ public partial class SpawnPoint : Node3D
         _spawnDetect = GetNode<Area3D>("SpawnDetect");
         _spawnDetectShape = _spawnDetect.GetNode<CollisionShape3D>("CollisionShape3D");
         _claim = CameraManager.Instance.Request(_virtualCamera, priority: 10);
-        InputManager.Subscribe(nameof(GameAction.Jump), onJustPressed: _ => Spawn());
+        _onJump = _ => Spawn();
+        InputManager.Subscribe(nameof(GameAction.Jump), onJustPressed: _onJump);
 
         _eligibleAabbs = new Aabb[EligibleSpawns?.Length ?? 0];
         for (var i = 0; i < _eligibleAabbs.Length; i++)
@@ -41,6 +44,7 @@ public partial class SpawnPoint : Node3D
 
     private void Spawn()
     {
+        if (IsQueuedForDeletion()) return;
         if (EligibleSpawns.Length == 0)
         {
             PluginLogger.Log(LogLevel.Debug, "Could not spawn; No eligible spawn types configured");
@@ -88,13 +92,43 @@ public partial class SpawnPoint : Node3D
 
         var spawnedNode = scene.Instantiate<Node3D>();
         GetTree().Root.AddChild(spawnedNode);
-        spawnedNode.Position = new Vector3(GlobalPosition.X, -aabb.Position.Y, GlobalPosition.Z);
-        spawnedNode.Rotation = GlobalRotation;
+        spawnedNode.GlobalPosition = GlobalPosition;
+        spawnedNode.GlobalRotation = GlobalRotation;
+
+        var lowestY = GetLowestCollisionY(spawnedNode);
+        if (lowestY < float.MaxValue)
+            spawnedNode.GlobalPosition += new Vector3(0, GlobalPosition.Y - lowestY, 0);
+        spawnedNode.GlobalPosition += SpawnOffset;
         PluginLogger.Log(LogLevel.Debug, $"Spawned {scene}");        
         
         _spawnCounter++;
         if (SpawnCount > 0 && _spawnCounter >= SpawnCount)
             CallDeferred(MethodName.QueueFree);
+    }
+
+    private static float GetLowestCollisionY(Node root)
+    {
+        var lowest = float.MaxValue;
+
+        void Walk(Node node)
+        {
+            if (node is CollisionShape3D cs && cs.Shape != null)
+            {
+                var halfExtent = cs.Shape switch
+                {
+                    SphereShape3D s   => s.Radius,
+                    CapsuleShape3D c  => c.Height / 2f,
+                    BoxShape3D b      => b.Size.Y / 2f,
+                    _                 => 0f
+                };
+                lowest = Mathf.Min(lowest, cs.GlobalPosition.Y - halfExtent);
+            }
+            foreach (var child in node.GetChildren())
+                Walk(child);
+        }
+
+        Walk(root);
+        return lowest;
     }
 
     /// <summary>
@@ -135,6 +169,7 @@ public partial class SpawnPoint : Node3D
 
     public override void _ExitTree()
     {
+        InputManager.Unsubscribe(nameof(GameAction.Jump), onJustPressed: _onJump);
         CameraManager.Instance.Release(_claim);
         base._ExitTree();
     }
