@@ -3,18 +3,16 @@
 [ext_resource type="Script" uid="uid://8q82ps5y4qgb" path="res://objects/player/RagdollCharacter.cs" id="1_6awg3"]
 [ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="1_qndj1"]
 [ext_resource type="Shape3D" uid="uid://c552atngx4bok" path="res://objects/player/resources/UpperarmShape.tres" id="2_efvl6"]
-[ext_resource type="BoxMesh" uid="uid://xdwbls7ha2el" path="res://objects/player/resources/GenericJointMesh.tres" id="2_r4nny"]
 [ext_resource type="CapsuleMesh" uid="uid://c7txiuylev3m7" path="res://objects/player/resources/UpperarmMesh.tres" id="3_cbwyq"]
-[ext_resource type="Shape3D" uid="uid://cvlgb3jpaba0x" path="res://objects/player/resources/GenericJointShape.tres" id="3_hj65h"]
 [ext_resource type="Shape3D" uid="uid://chrwnjhcy5uov" path="res://objects/player/resources/ForearmShape.tres" id="4_gr4vs"]
 [ext_resource type="CapsuleMesh" uid="uid://baokdw1s5c4xy" path="res://objects/player/resources/ForearmMesh.tres" id="5_yt38l"]
 [ext_resource type="Shape3D" uid="uid://co82rlhihb5ek" path="res://objects/player/resources/HandShape.tres" id="6_q4cwh"]
 [ext_resource type="SphereMesh" uid="uid://15vbi1raageo" path="res://objects/player/resources/HandMesh.tres" id="7_fyna3"]
 [ext_resource type="Shape3D" uid="uid://j2bstmyjinaq" path="res://objects/player/resources/UpperLegShape.tres" id="7_ouu6q"]
 [ext_resource type="CapsuleMesh" uid="uid://58bxdd64bkff" path="res://objects/player/resources/UpperLegMesh.tres" id="8_6awg3"]
-[ext_resource type="SphereMesh" uid="uid://ctaoq82yab5ks" path="res://objects/player/resources/HingeJointMesh.tres" id="9_g5umx"]
+[ext_resource type="SphereMesh" uid="uid://ctaoq82yab5ks" path="res://objects/player/resources/JointMesh.tres" id="9_g5umx"]
 [ext_resource type="CapsuleMesh" uid="uid://daw48erns85ld" path="res://objects/player/resources/LowerLegMesh.tres" id="10_02yxl"]
-[ext_resource type="Shape3D" uid="uid://nm3yi0r3wg67" path="res://objects/player/resources/HingeJointShape.tres" id="11_g5umx"]
+[ext_resource type="Shape3D" uid="uid://nm3yi0r3wg67" path="res://objects/player/resources/JointShape.tres" id="11_g5umx"]
 [ext_resource type="Shape3D" uid="uid://b8lsy43ms3g5x" path="res://objects/player/resources/LowerLegCollide.tres" id="11_r4nny"]
 [ext_resource type="Shape3D" uid="uid://dd40wxjbfdug8" path="res://objects/player/resources/FootShape.tres" id="12_hj65h"]
 [ext_resource type="BoxMesh" uid="uid://dbkcfxdl40475" path="res://objects/player/resources/FootMesh.tres" id="13_tiwv6"]
@@ -40,7 +38,7 @@ SpringStiffness = 5.0
 SpringDamping = 1.0
 
 [node name="Head" type="RigidBody3D" parent="." unique_id=1882174124]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.7562031, 0)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.7562031, -0.030788362)
 mass = 0.05
 
 [node name="HeadCollide" type="CollisionShape3D" parent="Head" unique_id=172522838]
@@ -50,7 +48,7 @@ shape = SubResource("SphereShape3D_4kvum")
 mesh = SubResource("SphereMesh_fnx2b")
 
 [node name="Neck" type="RigidBody3D" parent="." unique_id=333376144]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.030788362)
 collision_layer = 0
 collision_mask = 0
 mass = 0.001
@@ -60,14 +58,24 @@ node_a = NodePath("../../Head")
 node_b = NodePath("../../Torso")
 
 [node name="NeckMesh" type="MeshInstance3D" parent="Neck" unique_id=837916702]
-mesh = ExtResource("2_r4nny")
+mesh = ExtResource("9_g5umx")
 
 [node name="NeckCollide" type="CollisionShape3D" parent="Neck" unique_id=1277366925]
-shape = ExtResource("3_hj65h")
+shape = ExtResource("11_g5umx")
 
 [node name="NeckPin" type="PinJoint3D" parent="Neck" unique_id=286267430]
 node_a = NodePath("../../Head")
 node_b = NodePath("..")
+
+[node name="Torso" type="RigidBody3D" parent="." unique_id=1934478]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.08736634, -0.030788362)
+mass = 0.5
+
+[node name="TorsoCollide" type="CollisionShape3D" parent="Torso" unique_id=2055652880]
+shape = SubResource("CapsuleShape3D_nu1qf")
+
+[node name="TorsoMesh" type="MeshInstance3D" parent="Torso" unique_id=1262703246]
+mesh = SubResource("CapsuleMesh_sx2f5")
 
 [node name="ForwardRay" type="RayCast3D" parent="." unique_id=1784450655]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.0490733e-08, 0, -0.24)
@@ -80,16 +88,6 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.2
 
 [node name="RightRay" type="RayCast3D" parent="." unique_id=899962874]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.24, 0, -1.0490733e-08)
-
-[node name="Torso" type="RigidBody3D" parent="." unique_id=1934478]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.08736634, 0)
-mass = 0.5
-
-[node name="TorsoCollide" type="CollisionShape3D" parent="Torso" unique_id=2055652880]
-shape = SubResource("CapsuleShape3D_nu1qf")
-
-[node name="TorsoMesh" type="MeshInstance3D" parent="Torso" unique_id=1262703246]
-mesh = SubResource("CapsuleMesh_sx2f5")
 
 [node name="LeftArm" type="Node3D" parent="." unique_id=2039679028]
 transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, -0.6705066, 0.40484935, 2.9308774e-08)
@@ -293,10 +291,10 @@ node_a = NodePath("../../../Torso")
 node_b = NodePath("../../LULeg")
 
 [node name="LHipCollide" type="CollisionShape3D" parent="LeftLeg/LHip" unique_id=1558619923]
-shape = ExtResource("3_hj65h")
+shape = ExtResource("11_g5umx")
 
 [node name="LHipMesh" type="MeshInstance3D" parent="LeftLeg/LHip" unique_id=1814090027]
-mesh = ExtResource("2_r4nny")
+mesh = ExtResource("9_g5umx")
 
 [node name="LHipPin" type="PinJoint3D" parent="LeftLeg/LHip" unique_id=394864074]
 node_a = NodePath("../../../Torso")
@@ -350,7 +348,7 @@ mass = 0.001
 
 [node name="LAnkleJoint" type="Generic6DOFJoint3D" parent="LeftLeg/LAnkle" unique_id=1429530419]
 node_a = NodePath("../../LLLeg")
-node_b = NodePath("../../LeftFoot")
+node_b = NodePath("../../LFoot")
 
 [node name="LAnkleMesh" type="MeshInstance3D" parent="LeftLeg/LAnkle" unique_id=1581407128]
 mesh = ExtResource("9_g5umx")
@@ -362,14 +360,14 @@ shape = ExtResource("11_g5umx")
 node_a = NodePath("../../LLLeg")
 node_b = NodePath("..")
 
-[node name="LeftFoot" type="RigidBody3D" parent="LeftLeg" unique_id=1031926496]
+[node name="LFoot" type="RigidBody3D" parent="LeftLeg" unique_id=1031926496]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.5, 0)
 mass = 0.025
 
-[node name="LeftFootCollide" type="CollisionShape3D" parent="LeftLeg/LeftFoot" unique_id=1790944260]
+[node name="LFootCollide" type="CollisionShape3D" parent="LeftLeg/LFoot" unique_id=1790944260]
 shape = ExtResource("12_hj65h")
 
-[node name="LeftFootMesh" type="MeshInstance3D" parent="LeftLeg/LeftFoot" unique_id=1947572807]
+[node name="LFootMesh" type="MeshInstance3D" parent="LeftLeg/LFoot" unique_id=1947572807]
 mesh = ExtResource("13_tiwv6")
 
 [node name="RightLeg" type="Node3D" parent="." unique_id=1834048550]
@@ -386,10 +384,10 @@ node_a = NodePath("../../../Torso")
 node_b = NodePath("../../RULeg")
 
 [node name="RHipMesh" type="MeshInstance3D" parent="RightLeg/RHip" unique_id=1303146087]
-mesh = ExtResource("2_r4nny")
+mesh = ExtResource("9_g5umx")
 
 [node name="RHipCollide" type="CollisionShape3D" parent="RightLeg/RHip" unique_id=2088465132]
-shape = ExtResource("3_hj65h")
+shape = ExtResource("11_g5umx")
 
 [node name="RHipPin" type="PinJoint3D" parent="RightLeg/RHip" unique_id=1477454800]
 node_a = NodePath("../../../Torso")
@@ -443,7 +441,7 @@ mass = 0.001
 
 [node name="RAnkleJoint" type="Generic6DOFJoint3D" parent="RightLeg/RAnkle" unique_id=1465216050]
 node_a = NodePath("../../RLLeg")
-node_b = NodePath("../../RightFoot")
+node_b = NodePath("../../RFoot")
 
 [node name="RAnkleCollide" type="CollisionShape3D" parent="RightLeg/RAnkle" unique_id=355045058]
 shape = ExtResource("11_g5umx")
@@ -455,14 +453,14 @@ mesh = ExtResource("9_g5umx")
 node_a = NodePath("../../RLLeg")
 node_b = NodePath("..")
 
-[node name="RightFoot" type="RigidBody3D" parent="RightLeg" unique_id=1396504416]
+[node name="RFoot" type="RigidBody3D" parent="RightLeg" unique_id=1396504416]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.5, 0)
 mass = 0.025
 
-[node name="RightFootCollide" type="CollisionShape3D" parent="RightLeg/RightFoot" unique_id=1279911814]
+[node name="RFootCollide" type="CollisionShape3D" parent="RightLeg/RFoot" unique_id=1279911814]
 shape = ExtResource("12_hj65h")
 
-[node name="RightFootMesh" type="MeshInstance3D" parent="RightLeg/RightFoot" unique_id=815296823]
+[node name="RFootMesh" type="MeshInstance3D" parent="RightLeg/RFoot" unique_id=815296823]
 mesh = ExtResource("13_tiwv6")
 
 [node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]

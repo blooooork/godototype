@@ -129,10 +129,10 @@ public partial class RagdollCharacter : Node3D
         _rHand = GetNode<RigidBody3D>("RightArm/RHand");
         _lULeg = GetNode<RigidBody3D>("LeftLeg/LULeg");
         _lLLeg = GetNode<RigidBody3D>("LeftLeg/LLLeg");
-        _lFoot = GetNode<RigidBody3D>("LeftLeg/LeftFoot");
+        _lFoot = GetNode<RigidBody3D>("LeftLeg/LFoot");
         _rULeg = GetNode<RigidBody3D>("RightLeg/RULeg");
         _rLLeg = GetNode<RigidBody3D>("RightLeg/RLLeg");
-        _rFoot = GetNode<RigidBody3D>("RightLeg/RightFoot");
+        _rFoot = GetNode<RigidBody3D>("RightLeg/RFoot");
         // Build body map
         List<RigidBody3D> leftArm     = [_lUArm, _lLArm, _lHand];
         List<RigidBody3D> rightArm    = [_rUArm, _rLArm, _rHand];
