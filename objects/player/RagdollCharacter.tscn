@@ -5,6 +5,8 @@
 [ext_resource type="Shape3D" uid="uid://c552atngx4bok" path="res://objects/player/resources/UpperarmShape.tres" id="2_efvl6"]
 [ext_resource type="CapsuleMesh" uid="uid://c7txiuylev3m7" path="res://objects/player/resources/UpperarmMesh.tres" id="3_cbwyq"]
 [ext_resource type="Shape3D" uid="uid://chrwnjhcy5uov" path="res://objects/player/resources/ForearmShape.tres" id="4_gr4vs"]
+[ext_resource type="Shape3D" uid="uid://nnya7xu07w4u" path="res://objects/player/resources/TorsoShape.tres" id="4_r4nny"]
+[ext_resource type="CapsuleMesh" uid="uid://ccbwaosj1hcn5" path="res://objects/player/resources/TorsoMesh.tres" id="5_hj65h"]
 [ext_resource type="CapsuleMesh" uid="uid://baokdw1s5c4xy" path="res://objects/player/resources/ForearmMesh.tres" id="5_yt38l"]
 [ext_resource type="Shape3D" uid="uid://co82rlhihb5ek" path="res://objects/player/resources/HandShape.tres" id="6_q4cwh"]
 [ext_resource type="SphereMesh" uid="uid://15vbi1raageo" path="res://objects/player/resources/HandMesh.tres" id="7_fyna3"]
@@ -23,14 +25,6 @@ radius = 0.25
 [sub_resource type="SphereMesh" id="SphereMesh_fnx2b"]
 radius = 0.25
 height = 0.5
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_nu1qf"]
-radius = 0.25
-height = 0.8
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_sx2f5"]
-radius = 0.25
-height = 0.8
 
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
@@ -55,7 +49,7 @@ mass = 0.001
 
 [node name="NeckJoint" type="Generic6DOFJoint3D" parent="Neck" unique_id=1372355626]
 node_a = NodePath("../../Head")
-node_b = NodePath("../../Torso")
+node_b = NodePath("../../Torso/UTorso")
 
 [node name="NeckMesh" type="MeshInstance3D" parent="Neck" unique_id=837916702]
 mesh = ExtResource("9_g5umx")
@@ -67,15 +61,46 @@ shape = ExtResource("11_g5umx")
 node_a = NodePath("../../Head")
 node_b = NodePath("..")
 
-[node name="Torso" type="RigidBody3D" parent="." unique_id=1934478]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.08736634, -0.030788362)
-mass = 0.5
+[node name="Torso" type="Node3D" parent="." unique_id=1219984349]
 
-[node name="TorsoCollide" type="CollisionShape3D" parent="Torso" unique_id=2055652880]
-shape = SubResource("CapsuleShape3D_nu1qf")
+[node name="UTorso" type="RigidBody3D" parent="Torso" unique_id=1934478]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.315, 0)
+mass = 0.15
 
-[node name="TorsoMesh" type="MeshInstance3D" parent="Torso" unique_id=1262703246]
-mesh = SubResource("CapsuleMesh_sx2f5")
+[node name="UTorsoCollide" type="CollisionShape3D" parent="Torso/UTorso" unique_id=2055652880]
+shape = ExtResource("4_r4nny")
+
+[node name="UTorsoMesh" type="MeshInstance3D" parent="Torso/UTorso" unique_id=1262703246]
+mesh = ExtResource("5_hj65h")
+
+[node name="UTorsoJoint" type="Generic6DOFJoint3D" parent="Torso" unique_id=1723769295]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.20824328, 0)
+node_a = NodePath("../UTorso")
+node_b = NodePath("../MTorso")
+
+[node name="MTorso" type="RigidBody3D" parent="Torso" unique_id=1708331885]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.106, 0)
+mass = 0.15
+
+[node name="MTorsoCollide" type="CollisionShape3D" parent="Torso/MTorso" unique_id=337431700]
+shape = ExtResource("4_r4nny")
+
+[node name="MTorsoMesh" type="MeshInstance3D" parent="Torso/MTorso" unique_id=499922005]
+mesh = ExtResource("5_hj65h")
+
+[node name="LTorsoJoint" type="Generic6DOFJoint3D" parent="Torso" unique_id=445086684]
+node_a = NodePath("../MTorso")
+node_b = NodePath("../LTorso")
+
+[node name="LTorso" type="RigidBody3D" parent="Torso" unique_id=574818956]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.103, 0)
+mass = 0.15
+
+[node name="LTorsoCollide" type="CollisionShape3D" parent="Torso/LTorso" unique_id=2076344491]
+shape = ExtResource("4_r4nny")
+
+[node name="LTorsoMesh" type="MeshInstance3D" parent="Torso/LTorso" unique_id=1011289234]
+mesh = ExtResource("5_hj65h")
 
 [node name="ForwardRay" type="RayCast3D" parent="." unique_id=1784450655]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.0490733e-08, 0, -0.24)
@@ -99,7 +124,7 @@ collision_mask = 0
 mass = 0.001
 
 [node name="LShoulderJoint" type="Generic6DOFJoint3D" parent="LeftArm/LShoulder" unique_id=481742081]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("../../LUArm")
 
 [node name="LShoulderMesh" type="MeshInstance3D" parent="LeftArm/LShoulder" unique_id=1934046743]
@@ -109,7 +134,7 @@ mesh = ExtResource("9_g5umx")
 shape = ExtResource("11_g5umx")
 
 [node name="LShoulderPin" type="PinJoint3D" parent="LeftArm/LShoulder" unique_id=326071165]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("..")
 
 [node name="LUArm" type="RigidBody3D" parent="LeftArm" unique_id=530019125]
@@ -192,7 +217,7 @@ collision_mask = 0
 mass = 0.001
 
 [node name="RShoulderJoint" type="Generic6DOFJoint3D" parent="RightArm/RShoulder" unique_id=998943023]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("../../RUArm")
 
 [node name="RShoulderMesh" type="MeshInstance3D" parent="RightArm/RShoulder" unique_id=1800334766]
@@ -202,7 +227,7 @@ mesh = ExtResource("9_g5umx")
 shape = ExtResource("11_g5umx")
 
 [node name="RShoulderPin" type="PinJoint3D" parent="RightArm/RShoulder" unique_id=632011580]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("..")
 
 [node name="RUArm" type="RigidBody3D" parent="RightArm" unique_id=1104340671]
@@ -287,7 +312,7 @@ collision_mask = 0
 mass = 0.001
 
 [node name="LHipJoint" type="Generic6DOFJoint3D" parent="LeftLeg/LHip" unique_id=132703800]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/LTorso")
 node_b = NodePath("../../LULeg")
 
 [node name="LHipCollide" type="CollisionShape3D" parent="LeftLeg/LHip" unique_id=1558619923]
@@ -297,7 +322,7 @@ shape = ExtResource("11_g5umx")
 mesh = ExtResource("9_g5umx")
 
 [node name="LHipPin" type="PinJoint3D" parent="LeftLeg/LHip" unique_id=394864074]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("..")
 
 [node name="LULeg" type="RigidBody3D" parent="LeftLeg" unique_id=1980744563]
@@ -380,7 +405,7 @@ collision_mask = 0
 mass = 0.001
 
 [node name="RHipJoint" type="Generic6DOFJoint3D" parent="RightLeg/RHip" unique_id=893606245]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/LTorso")
 node_b = NodePath("../../RULeg")
 
 [node name="RHipMesh" type="MeshInstance3D" parent="RightLeg/RHip" unique_id=1303146087]
@@ -390,7 +415,7 @@ mesh = ExtResource("9_g5umx")
 shape = ExtResource("11_g5umx")
 
 [node name="RHipPin" type="PinJoint3D" parent="RightLeg/RHip" unique_id=1477454800]
-node_a = NodePath("../../../Torso")
+node_a = NodePath("../../../Torso/UTorso")
 node_b = NodePath("..")
 
 [node name="RULeg" type="RigidBody3D" parent="RightLeg" unique_id=377049623]
