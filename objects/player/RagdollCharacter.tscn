@@ -32,7 +32,7 @@ SpringStiffness = 5.0
 SpringDamping = 1.0
 
 [node name="Head" type="RigidBody3D" parent="." unique_id=1882174124]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.7562031, -0.030788362)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.756, -0.040441275)
 mass = 0.05
 
 [node name="HeadCollide" type="CollisionShape3D" parent="Head" unique_id=172522838]
@@ -42,7 +42,7 @@ shape = SubResource("SphereShape3D_4kvum")
 mesh = SubResource("SphereMesh_fnx2b")
 
 [node name="Neck" type="RigidBody3D" parent="." unique_id=333376144]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.030788362)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.029713273)
 collision_layer = 0
 collision_mask = 0
 mass = 0.001
@@ -62,9 +62,10 @@ node_a = NodePath("../../Head")
 node_b = NodePath("..")
 
 [node name="Torso" type="Node3D" parent="." unique_id=1219984349]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04292959)
 
 [node name="UTorso" type="RigidBody3D" parent="Torso" unique_id=1934478]
-transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.315, 0)
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.315, 0.0089535415)
 mass = 0.15
 
 [node name="UTorsoCollide" type="CollisionShape3D" parent="Torso/UTorso" unique_id=2055652880]
@@ -79,7 +80,7 @@ node_a = NodePath("../UTorso")
 node_b = NodePath("../MTorso")
 
 [node name="MTorso" type="RigidBody3D" parent="Torso" unique_id=1708331885]
-transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.106, 0)
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.106, 0.00017890334)
 mass = 0.15
 
 [node name="MTorsoCollide" type="CollisionShape3D" parent="Torso/MTorso" unique_id=337431700]
@@ -93,7 +94,7 @@ node_a = NodePath("../MTorso")
 node_b = NodePath("../LTorso")
 
 [node name="LTorso" type="RigidBody3D" parent="Torso" unique_id=574818956]
-transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.103, 0)
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.103, 0.01693125)
 mass = 0.15
 
 [node name="LTorsoCollide" type="CollisionShape3D" parent="Torso/LTorso" unique_id=2076344491]
@@ -102,20 +103,8 @@ shape = ExtResource("4_r4nny")
 [node name="LTorsoMesh" type="MeshInstance3D" parent="Torso/LTorso" unique_id=1011289234]
 mesh = ExtResource("5_hj65h")
 
-[node name="ForwardRay" type="RayCast3D" parent="." unique_id=1784450655]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -1.0490733e-08, 0, -0.24)
-
-[node name="BackRay" type="RayCast3D" parent="." unique_id=986043708]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 1.0490733e-08, 0, 0.24)
-
-[node name="LeftRay" type="RayCast3D" parent="." unique_id=1301103999]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.24226505, 0, 0)
-
-[node name="RightRay" type="RayCast3D" parent="." unique_id=899962874]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.24, 0, -1.0490733e-08)
-
 [node name="LeftArm" type="Node3D" parent="." unique_id=2039679028]
-transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, -0.6705066, 0.40484935, 2.9308774e-08)
+transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, -0.6705066, 0.40484935, -0.013141275)
 
 [node name="LShoulder" type="RigidBody3D" parent="LeftArm" unique_id=833001063]
 transform = Transform3D(-4.371139e-08, 0, 1, 1.6420284e-15, 1, 0, -1, -8.351872e-23, -4.371139e-08, -1.8874236e-10, 0.42047244, 0.001463592)
@@ -208,7 +197,7 @@ shape = ExtResource("6_q4cwh")
 mesh = ExtResource("7_fyna3")
 
 [node name="RightArm" type="Node3D" parent="." unique_id=1511505540]
-transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, 0.671, 0.405, -2.933034e-08)
+transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, 0.671, 0.405, -0.013141333)
 
 [node name="RShoulder" type="RigidBody3D" parent="RightArm" unique_id=1501814028]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, -0.42, 0.002)

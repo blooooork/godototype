@@ -31,11 +31,6 @@ public partial class RagdollCharacter : Node3D
     private Action<string> _onJump;
     private Action<string> _onCrouch;
     private Action<string> _onCrouchRelease;
-    // Raycasts
-    private RayCast3D _rayForward;
-    private RayCast3D _rayBack;
-    private RayCast3D _rayLeft;
-    private RayCast3D _rayRight;
     // Joints
     private Generic6DofJoint3D _neckJoint;
     private Generic6DofJoint3D _uTorsoJoint;
@@ -92,15 +87,10 @@ public partial class RagdollCharacter : Node3D
         // Get camera
         _camera = GetNode<IVirtualCamera>("Camera");
         _cameraClaim = CameraManager.Instance.Request(_camera, priority: 20);
-        // Get raycasts
-        _rayForward = GetNode<RayCast3D>("ForwardRay");
-        _rayBack    = GetNode<RayCast3D>("BackRay");
-        _rayLeft    = GetNode<RayCast3D>("LeftRay");
-        _rayRight   = GetNode<RayCast3D>("RightRay");
         // Get joints
         _neckJoint     = GetNode<Generic6DofJoint3D>("Neck/NeckJoint");
-        _uTorsoJoint   = GetNode<Generic6DofJoint3D>("UTorsoJoint");
-        _lTorsoJoint   = GetNode<Generic6DofJoint3D>("LTorsoJoint");
+        _uTorsoJoint   = GetNode<Generic6DofJoint3D>("Torso/UTorsoJoint");
+        _lTorsoJoint   = GetNode<Generic6DofJoint3D>("Torso/LTorsoJoint");
         _leftShoulder  = GetNode<Generic6DofJoint3D>("LeftArm/LShoulder/LShoulderJoint");
         _leftElbow     = GetNode<Generic6DofJoint3D>("LeftArm/LElbow/LElbowJoint");
         _leftWrist     = GetNode<Generic6DofJoint3D>("LeftArm/LWrist/LWristJoint");
@@ -138,9 +128,9 @@ public partial class RagdollCharacter : Node3D
         _rAnkleBody    = GetNode<RigidBody3D>("RightLeg/RAnkle");
         // Get body parts
         _head   = GetNode<RigidBody3D>("Head");
-        _uTorso = GetNode<RigidBody3D>("UTorso");
-        _mTorso = GetNode<RigidBody3D>("MTorso");
-        _lTorso = GetNode<RigidBody3D>("LTorso");
+        _uTorso = GetNode<RigidBody3D>("Torso/UTorso");
+        _mTorso = GetNode<RigidBody3D>("Torso/MTorso");
+        _lTorso = GetNode<RigidBody3D>("Torso/LTorso");
         _lUArm = GetNode<RigidBody3D>("LeftArm/LUArm");
         _lLArm = GetNode<RigidBody3D>("LeftArm/LLArm");
         _lHand = GetNode<RigidBody3D>("LeftArm/LHand");
@@ -278,16 +268,9 @@ public partial class RagdollCharacter : Node3D
         base._Ready();
     }
 
-    private bool IsGrounded() =>
-        _rayForward.IsColliding() ||
-        _rayBack.IsColliding()    ||
-        _rayLeft.IsColliding()    ||
-        _rayRight.IsColliding();
-
     private void Jump()
     {
-        if (IsGrounded())
-            _lTorso.ApplyCentralImpulse(Vector3.Up * JumpForce * _lTorso.Mass);
+        _lTorso.ApplyCentralImpulse(Vector3.Up * JumpForce * _lTorso.Mass);
     }
 
     private void Ragdoll()
