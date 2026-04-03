@@ -91,18 +91,18 @@ public partial class RagdollCharacter : Node3D
         _neckJoint     = GetNode<Generic6DofJoint3D>("Neck/NeckJoint");
         _uTorsoJoint   = GetNode<Generic6DofJoint3D>("Torso/UTorsoJoint");
         _lTorsoJoint   = GetNode<Generic6DofJoint3D>("Torso/LTorsoJoint");
-        _leftShoulder  = GetNode<Generic6DofJoint3D>("LeftArm/LShoulder/LShoulderJoint");
-        _leftElbow     = GetNode<Generic6DofJoint3D>("LeftArm/LElbow/LElbowJoint");
-        _leftWrist     = GetNode<Generic6DofJoint3D>("LeftArm/LWrist/LWristJoint");
+        _leftShoulder  = GetNode<Generic6DofJoint3D>("LeftArm/Shoulder/ShoulderJoint");
+        _leftElbow     = GetNode<Generic6DofJoint3D>("LeftArm/Elbow/ElbowJoint");
+        _leftWrist     = GetNode<Generic6DofJoint3D>("LeftArm/Wrist/WristJoint");
         _rightShoulder = GetNode<Generic6DofJoint3D>("RightArm/RShoulder/RShoulderJoint");
         _rightElbow    = GetNode<Generic6DofJoint3D>("RightArm/RElbow/RElbowJoint");
         _rightWrist    = GetNode<Generic6DofJoint3D>("RightArm/RWrist/RWristJoint");
-        _leftHip       = GetNode<Generic6DofJoint3D>("LeftLeg/LHip/LHipJoint");
-        _leftKnee      = GetNode<Generic6DofJoint3D>("LeftLeg/LKnee/LKneeJoint");
-        _leftAnkle     = GetNode<Generic6DofJoint3D>("LeftLeg/LAnkle/LAnkleJoint");
-        _rightHip      = GetNode<Generic6DofJoint3D>("RightLeg/RHip/RHipJoint");
-        _rightKnee     = GetNode<Generic6DofJoint3D>("RightLeg/RKnee/RKneeJoint");
-        _rightAnkle    = GetNode<Generic6DofJoint3D>("RightLeg/RAnkle/RAnkleJoint");
+        _leftHip       = GetNode<Generic6DofJoint3D>("LeftLeg/Hip/HipJoint");
+        _leftKnee      = GetNode<Generic6DofJoint3D>("LeftLeg/Knee/KneeJoint");
+        _leftAnkle     = GetNode<Generic6DofJoint3D>("LeftLeg/Ankle/AnkleJoint");
+        _rightHip      = GetNode<Generic6DofJoint3D>("RightLeg/Hip/HipJoint");
+        _rightKnee     = GetNode<Generic6DofJoint3D>("RightLeg/Knee/KneeJoint");
+        _rightAnkle    = GetNode<Generic6DofJoint3D>("RightLeg/Ankle/AnkleJoint");
         _joints =
         [
             _neckJoint,
@@ -114,35 +114,35 @@ public partial class RagdollCharacter : Node3D
         ];
         // Get joint bodies
         _neckBody      = GetNode<RigidBody3D>("Neck");
-        _lShoulderBody = GetNode<RigidBody3D>("LeftArm/LShoulder");
-        _lElbowBody    = GetNode<RigidBody3D>("LeftArm/LElbow");
-        _lWristBody    = GetNode<RigidBody3D>("LeftArm/LWrist");
+        _lShoulderBody = GetNode<RigidBody3D>("LeftArm/Shoulder");
+        _lElbowBody    = GetNode<RigidBody3D>("LeftArm/Elbow");
+        _lWristBody    = GetNode<RigidBody3D>("LeftArm/Wrist");
         _rShoulderBody = GetNode<RigidBody3D>("RightArm/RShoulder");
         _rElbowBody    = GetNode<RigidBody3D>("RightArm/RElbow");
         _rWristBody    = GetNode<RigidBody3D>("RightArm/RWrist");
-        _lHipBody      = GetNode<RigidBody3D>("LeftLeg/LHip");
-        _lKneeBody     = GetNode<RigidBody3D>("LeftLeg/LKnee");
-        _lAnkleBody    = GetNode<RigidBody3D>("LeftLeg/LAnkle");
-        _rHipBody      = GetNode<RigidBody3D>("RightLeg/RHip");
-        _rKneeBody     = GetNode<RigidBody3D>("RightLeg/RKnee");
-        _rAnkleBody    = GetNode<RigidBody3D>("RightLeg/RAnkle");
+        _lHipBody      = GetNode<RigidBody3D>("LeftLeg/Hip");
+        _lKneeBody     = GetNode<RigidBody3D>("LeftLeg/Knee");
+        _lAnkleBody    = GetNode<RigidBody3D>("LeftLeg/Ankle");
+        _rHipBody      = GetNode<RigidBody3D>("RightLeg/Hip");
+        _rKneeBody     = GetNode<RigidBody3D>("RightLeg/Knee");
+        _rAnkleBody    = GetNode<RigidBody3D>("RightLeg/Ankle");
         // Get body parts
         _head   = GetNode<RigidBody3D>("Head");
         _uTorso = GetNode<RigidBody3D>("Torso/UTorso");
         _mTorso = GetNode<RigidBody3D>("Torso/MTorso");
         _lTorso = GetNode<RigidBody3D>("Torso/LTorso");
-        _lUArm = GetNode<RigidBody3D>("LeftArm/LUArm");
-        _lLArm = GetNode<RigidBody3D>("LeftArm/LLArm");
-        _lHand = GetNode<RigidBody3D>("LeftArm/LHand");
+        _lUArm = GetNode<RigidBody3D>("LeftArm/UArm");
+        _lLArm = GetNode<RigidBody3D>("LeftArm/LArm");
+        _lHand = GetNode<RigidBody3D>("LeftArm/Hand");
         _rUArm = GetNode<RigidBody3D>("RightArm/RUArm");
         _rLArm = GetNode<RigidBody3D>("RightArm/RLArm");
         _rHand = GetNode<RigidBody3D>("RightArm/RHand");
-        _lULeg = GetNode<RigidBody3D>("LeftLeg/LULeg");
-        _lLLeg = GetNode<RigidBody3D>("LeftLeg/LLLeg");
-        _lFoot = GetNode<RigidBody3D>("LeftLeg/LFoot");
-        _rULeg = GetNode<RigidBody3D>("RightLeg/RULeg");
-        _rLLeg = GetNode<RigidBody3D>("RightLeg/RLLeg");
-        _rFoot = GetNode<RigidBody3D>("RightLeg/RFoot");
+        _lULeg = GetNode<RigidBody3D>("LeftLeg/ULeg");
+        _lLLeg = GetNode<RigidBody3D>("LeftLeg/LLeg");
+        _lFoot = GetNode<RigidBody3D>("LeftLeg/Foot");
+        _rULeg = GetNode<RigidBody3D>("RightLeg/ULeg");
+        _rLLeg = GetNode<RigidBody3D>("RightLeg/LLeg");
+        _rFoot = GetNode<RigidBody3D>("RightLeg/Foot");
         // Build body map
         List<RigidBody3D> torso       = [_uTorso, _mTorso, _lTorso];
         List<RigidBody3D> leftArm     = [_lUArm, _lLArm, _lHand];
@@ -179,7 +179,6 @@ public partial class RagdollCharacter : Node3D
         InputManager.Subscribe(nameof(GameAction.Crouch),
             onJustPressed:  _onCrouch        = _ => Ragdoll(),
             onJustReleased: _onCrouchRelease = _ => StandUp());
-        Callable.From(() => _camera.SetFocus(_uTorso)).CallDeferred();
         base._EnterTree();
     }
 

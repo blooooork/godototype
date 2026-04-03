@@ -1,0 +1,112 @@
+[gd_scene format=3 uid="uid://d276sd51losjc"]
+
+[ext_resource type="Script" uid="uid://8q82ps5y4qgb" path="res://objects/player/ragdoll/RagdollCharacter.cs" id="1_6awg3"]
+[ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="1_qndj1"]
+[ext_resource type="Shape3D" uid="uid://nnya7xu07w4u" path="res://objects/player/resources/TorsoShape.tres" id="4_r4nny"]
+[ext_resource type="CapsuleMesh" uid="uid://ccbwaosj1hcn5" path="res://objects/player/resources/TorsoMesh.tres" id="5_hj65h"]
+[ext_resource type="PackedScene" uid="uid://c11ctfan6g5iu" path="res://objects/player/ragdoll/limbs/Arm.tscn" id="6_tw8h2"]
+[ext_resource type="PackedScene" uid="uid://c14jtdoao3dah" path="res://objects/player/ragdoll/limbs/Leg.tscn" id="7_ns8cp"]
+[ext_resource type="SphereMesh" uid="uid://ctaoq82yab5ks" path="res://objects/player/resources/JointMesh.tres" id="9_g5umx"]
+[ext_resource type="Shape3D" uid="uid://nm3yi0r3wg67" path="res://objects/player/resources/JointShape.tres" id="11_g5umx"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_4kvum"]
+radius = 0.25
+
+[sub_resource type="SphereMesh" id="SphereMesh_fnx2b"]
+radius = 0.25
+height = 0.5
+
+[node name="RagdollCharacter" type="Node3D" unique_id=385904974]
+script = ExtResource("1_6awg3")
+SpringStiffness = 5.0
+SpringDamping = 1.0
+
+[node name="Head" type="RigidBody3D" parent="." unique_id=1882174124]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.756, -0.040441275)
+mass = 0.05
+
+[node name="HeadCollide" type="CollisionShape3D" parent="Head" unique_id=172522838]
+shape = SubResource("SphereShape3D_4kvum")
+
+[node name="HeadMesh" type="MeshInstance3D" parent="Head" unique_id=436617472]
+mesh = SubResource("SphereMesh_fnx2b")
+
+[node name="Neck" type="RigidBody3D" parent="." unique_id=333376144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -0.029713273)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="NeckJoint" type="Generic6DOFJoint3D" parent="Neck" unique_id=1372355626]
+node_a = NodePath("../../Head")
+node_b = NodePath("../../Torso/UTorso")
+
+[node name="NeckMesh" type="MeshInstance3D" parent="Neck" unique_id=837916702]
+mesh = ExtResource("9_g5umx")
+
+[node name="NeckCollide" type="CollisionShape3D" parent="Neck" unique_id=1277366925]
+shape = ExtResource("11_g5umx")
+
+[node name="NeckPin" type="PinJoint3D" parent="Neck" unique_id=286267430]
+node_a = NodePath("../../Head")
+node_b = NodePath("..")
+
+[node name="Torso" type="Node3D" parent="." unique_id=1219984349]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.04292959)
+
+[node name="UTorso" type="RigidBody3D" parent="Torso" unique_id=1934478]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.315, 0.0089535415)
+mass = 0.15
+
+[node name="UTorsoCollide" type="CollisionShape3D" parent="Torso/UTorso" unique_id=2055652880]
+shape = ExtResource("4_r4nny")
+
+[node name="UTorsoMesh" type="MeshInstance3D" parent="Torso/UTorso" unique_id=1262703246]
+mesh = ExtResource("5_hj65h")
+
+[node name="UTorsoJoint" type="Generic6DOFJoint3D" parent="Torso" unique_id=1723769295]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.20824328, 0)
+node_a = NodePath("../UTorso")
+node_b = NodePath("../MTorso")
+
+[node name="MTorso" type="RigidBody3D" parent="Torso" unique_id=1708331885]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.106, 0.00017890334)
+mass = 0.15
+
+[node name="MTorsoCollide" type="CollisionShape3D" parent="Torso/MTorso" unique_id=337431700]
+shape = ExtResource("4_r4nny")
+
+[node name="MTorsoMesh" type="MeshInstance3D" parent="Torso/MTorso" unique_id=499922005]
+mesh = ExtResource("5_hj65h")
+
+[node name="LTorsoJoint" type="Generic6DOFJoint3D" parent="Torso" unique_id=445086684]
+node_a = NodePath("../MTorso")
+node_b = NodePath("../LTorso")
+
+[node name="LTorso" type="RigidBody3D" parent="Torso" unique_id=574818956]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.103, 0.01693125)
+mass = 0.15
+
+[node name="LTorsoCollide" type="CollisionShape3D" parent="Torso/LTorso" unique_id=2076344491]
+shape = ExtResource("4_r4nny")
+
+[node name="LTorsoMesh" type="MeshInstance3D" parent="Torso/LTorso" unique_id=1011289234]
+mesh = ExtResource("5_hj65h")
+
+[node name="RightArm" parent="." unique_id=1017599828 node_paths=PackedStringArray("Anchor") instance=ExtResource("6_tw8h2")]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0.671, 0.405, -0.01)
+Anchor = NodePath("../Torso/UTorso")
+
+[node name="LeftArm" parent="." unique_id=1502921071 node_paths=PackedStringArray("Anchor") instance=ExtResource("6_tw8h2")]
+transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, -0.6705066, 0.40484935, -0.013141275)
+Anchor = NodePath("../Torso/UTorso")
+
+[node name="RightLeg" parent="." unique_id=1168917906 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.2, -0.43, 0)
+Anchor = NodePath("../Torso/LTorso")
+
+[node name="LeftLeg" parent="." unique_id=945177328 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.2, -0.43878594, 8.742278e-09)
+Anchor = NodePath("../Torso/LTorso")
+
+[node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]

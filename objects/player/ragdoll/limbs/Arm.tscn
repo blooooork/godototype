@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://c11ctfan6g5iu"]
+
+[ext_resource type="Script" uid="uid://4xmduur1l3fv" path="res://objects/player/ragdoll/limbs/Arm.cs" id="1_3mok3"]
+[ext_resource type="SphereMesh" uid="uid://ctaoq82yab5ks" path="res://objects/player/resources/JointMesh.tres" id="1_y0768"]
+[ext_resource type="Shape3D" uid="uid://nm3yi0r3wg67" path="res://objects/player/resources/JointShape.tres" id="2_3mok3"]
+[ext_resource type="Shape3D" uid="uid://c552atngx4bok" path="res://objects/player/resources/UpperarmShape.tres" id="3_wpp0n"]
+[ext_resource type="CapsuleMesh" uid="uid://c7txiuylev3m7" path="res://objects/player/resources/UpperarmMesh.tres" id="4_uekfo"]
+[ext_resource type="Shape3D" uid="uid://chrwnjhcy5uov" path="res://objects/player/resources/ForearmShape.tres" id="5_tpq0t"]
+[ext_resource type="CapsuleMesh" uid="uid://baokdw1s5c4xy" path="res://objects/player/resources/ForearmMesh.tres" id="6_lunta"]
+[ext_resource type="Shape3D" uid="uid://co82rlhihb5ek" path="res://objects/player/resources/HandShape.tres" id="7_4g7qm"]
+[ext_resource type="SphereMesh" uid="uid://15vbi1raageo" path="res://objects/player/resources/HandMesh.tres" id="8_0mkve"]
+
+[node name="Arm" type="Node3D" unique_id=1502921071]
+transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, 0, 0, 0)
+script = ExtResource("1_3mok3")
+
+[node name="Shoulder" type="RigidBody3D" parent="." unique_id=714139054]
+transform = Transform3D(-4.371139e-08, 0, 1, 1.6420284e-15, 1, 0, -1, -8.351872e-23, -4.371139e-08, -1.8874236e-10, 0.42047244, 0.001463592)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="ShoulderJoint" type="Generic6DOFJoint3D" parent="Shoulder" unique_id=1047131458]
+node_b = NodePath("../../UArm")
+
+[node name="ShoulderMesh" type="MeshInstance3D" parent="Shoulder" unique_id=152153756]
+mesh = ExtResource("1_y0768")
+
+[node name="ShoulderCollide" type="CollisionShape3D" parent="Shoulder" unique_id=738524876]
+shape = ExtResource("2_3mok3")
+
+[node name="ShoulderPin" type="PinJoint3D" parent="Shoulder" unique_id=454954942]
+node_a = NodePath("../../UArm")
+node_b = NodePath("..")
+
+[node name="UArm" type="RigidBody3D" parent="." unique_id=612124908]
+transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, 0, 0.26, 0)
+mass = 0.05
+
+[node name="UArmCollide" type="CollisionShape3D" parent="UArm" unique_id=1468117011]
+shape = ExtResource("3_wpp0n")
+
+[node name="UArmMesh" type="MeshInstance3D" parent="UArm" unique_id=1749735700]
+mesh = ExtResource("4_uekfo")
+
+[node name="Elbow" type="RigidBody3D" parent="." unique_id=850787247]
+transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, -4.6919286e-09, 0.11033881, 0)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="ElbowJoint" type="Generic6DOFJoint3D" parent="Elbow" unique_id=258313914]
+node_a = NodePath("../../UArm")
+node_b = NodePath("../../LArm")
+
+[node name="ElbowMesh" type="MeshInstance3D" parent="Elbow" unique_id=76268092]
+mesh = ExtResource("1_y0768")
+
+[node name="ElbowCollide" type="CollisionShape3D" parent="Elbow" unique_id=1957697954]
+shape = ExtResource("2_3mok3")
+
+[node name="ElbowPin" type="PinJoint3D" parent="Elbow" unique_id=1346613517]
+node_a = NodePath("..")
+node_b = NodePath("../../UArm")
+
+[node name="LArm" type="RigidBody3D" parent="." unique_id=88158467]
+transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, -6.0337975e-09, -0.016374648, 0)
+mass = 0.05
+
+[node name="LArmCollide" type="CollisionShape3D" parent="LArm" unique_id=669949177]
+shape = ExtResource("5_tpq0t")
+
+[node name="LArmMesh" type="MeshInstance3D" parent="LArm" unique_id=77112598]
+mesh = ExtResource("6_lunta")
+
+[node name="Wrist" type="RigidBody3D" parent="." unique_id=354687391]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="WristJoint" type="Generic6DOFJoint3D" parent="Wrist" unique_id=632216757]
+node_a = NodePath("../../LArm")
+node_b = NodePath("../../Hand")
+
+[node name="WristCollide" type="CollisionShape3D" parent="Wrist" unique_id=533229517]
+shape = ExtResource("2_3mok3")
+
+[node name="WristMesh" type="MeshInstance3D" parent="Wrist" unique_id=928650148]
+mesh = ExtResource("1_y0768")
+
+[node name="WristPin" type="PinJoint3D" parent="Wrist" unique_id=587859501]
+node_a = NodePath("../../LArm")
+node_b = NodePath("..")
+
+[node name="Hand" type="RigidBody3D" parent="." unique_id=594668503]
+transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, 0, -0.25, 0)
+mass = 0.025
+
+[node name="HandCollide" type="CollisionShape3D" parent="Hand" unique_id=370698494]
+shape = ExtResource("7_4g7qm")
+
+[node name="HandMesh" type="MeshInstance3D" parent="Hand" unique_id=1716898920]
+mesh = ExtResource("8_0mkve")

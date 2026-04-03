@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://c14jtdoao3dah"]
+
+[ext_resource type="Shape3D" uid="uid://nm3yi0r3wg67" path="res://objects/player/resources/JointShape.tres" id="1_d1vnf"]
+[ext_resource type="Script" uid="uid://imwsrbub4kii" path="res://objects/player/ragdoll/limbs/Leg.cs" id="1_e2w2k"]
+[ext_resource type="SphereMesh" uid="uid://ctaoq82yab5ks" path="res://objects/player/resources/JointMesh.tres" id="2_e2w2k"]
+[ext_resource type="Shape3D" uid="uid://j2bstmyjinaq" path="res://objects/player/resources/UpperLegShape.tres" id="3_8d3at"]
+[ext_resource type="CapsuleMesh" uid="uid://58bxdd64bkff" path="res://objects/player/resources/UpperLegMesh.tres" id="4_meuq8"]
+[ext_resource type="CapsuleMesh" uid="uid://daw48erns85ld" path="res://objects/player/resources/LowerLegMesh.tres" id="5_f7071"]
+[ext_resource type="Shape3D" uid="uid://b8lsy43ms3g5x" path="res://objects/player/resources/LowerLegCollide.tres" id="6_1p1bh"]
+[ext_resource type="Shape3D" uid="uid://dd40wxjbfdug8" path="res://objects/player/resources/FootShape.tres" id="7_uergi"]
+[ext_resource type="BoxMesh" uid="uid://dbkcfxdl40475" path="res://objects/player/resources/FootMesh.tres" id="8_rlvk5"]
+
+[node name="Leg" type="Node3D" unique_id=1168917906]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
+script = ExtResource("1_e2w2k")
+
+[node name="Hip" type="RigidBody3D" parent="." unique_id=471056382]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.22, 0)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="HipJoint" type="Generic6DOFJoint3D" parent="Hip" unique_id=1930462648]
+node_b = NodePath("../../ULeg")
+
+[node name="HipCollide" type="CollisionShape3D" parent="Hip" unique_id=662587220]
+shape = ExtResource("1_d1vnf")
+
+[node name="HipMesh" type="MeshInstance3D" parent="Hip" unique_id=613707499]
+mesh = ExtResource("2_e2w2k")
+
+[node name="HipPin" type="PinJoint3D" parent="Hip" unique_id=857466475]
+node_a = NodePath("../../ULeg")
+node_b = NodePath("..")
+
+[node name="ULeg" type="RigidBody3D" parent="." unique_id=398798659]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+mass = 0.05
+
+[node name="ULegCollide" type="CollisionShape3D" parent="ULeg" unique_id=1552021694]
+shape = ExtResource("3_8d3at")
+
+[node name="ULegMesh" type="MeshInstance3D" parent="ULeg" unique_id=1312994428]
+mesh = ExtResource("4_meuq8")
+
+[node name="Knee" type="RigidBody3D" parent="." unique_id=154457265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13422742, 0)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="KneeJoint" type="Generic6DOFJoint3D" parent="Knee" unique_id=1887775957]
+node_a = NodePath("../../ULeg")
+node_b = NodePath("../../LLeg")
+
+[node name="KneeMesh" type="MeshInstance3D" parent="Knee" unique_id=1341928660]
+mesh = ExtResource("2_e2w2k")
+
+[node name="KneeCollide" type="CollisionShape3D" parent="Knee" unique_id=635219382]
+shape = ExtResource("1_d1vnf")
+
+[node name="KneePin" type="PinJoint3D" parent="Knee" unique_id=1384259576]
+node_a = NodePath("..")
+node_b = NodePath("../../ULeg")
+
+[node name="LLeg" type="RigidBody3D" parent="." unique_id=1600691418]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.30524492, 0)
+mass = 0.05
+
+[node name="LLegMesh" type="MeshInstance3D" parent="LLeg" unique_id=1916484948]
+mesh = ExtResource("5_f7071")
+
+[node name="LLegCollide" type="CollisionShape3D" parent="LLeg" unique_id=863901930]
+shape = ExtResource("6_1p1bh")
+
+[node name="Ankle" type="RigidBody3D" parent="." unique_id=1134950416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.44000003, 0)
+collision_layer = 0
+collision_mask = 0
+mass = 0.001
+
+[node name="AnkleJoint" type="Generic6DOFJoint3D" parent="Ankle" unique_id=1825399304]
+node_a = NodePath("../../LLeg")
+node_b = NodePath("../../Foot")
+
+[node name="AnkleMesh" type="MeshInstance3D" parent="Ankle" unique_id=2147059849]
+mesh = ExtResource("2_e2w2k")
+
+[node name="AnkleCollide" type="CollisionShape3D" parent="Ankle" unique_id=70914959]
+shape = ExtResource("1_d1vnf")
+
+[node name="AnklePin" type="PinJoint3D" parent="Ankle" unique_id=1415854185]
+node_a = NodePath("../../LLeg")
+node_b = NodePath("..")
+
+[node name="Foot" type="RigidBody3D" parent="." unique_id=1927056736]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.5, 0)
+mass = 0.025
+
+[node name="FootCollide" type="CollisionShape3D" parent="Foot" unique_id=1918599764]
+shape = ExtResource("7_uergi")
+
+[node name="FootMesh" type="MeshInstance3D" parent="Foot" unique_id=1282476204]
+mesh = ExtResource("8_rlvk5")

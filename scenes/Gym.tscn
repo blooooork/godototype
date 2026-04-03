@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dmlf0u8isr8fm" path="res://scenes/Gym.cs" id="1_qunvx"]
 [ext_resource type="PackedScene" uid="uid://bh3xg5qlrlilb" path="res://objects/building/floor.tscn" id="2_f7ncc"]
 [ext_resource type="PackedScene" uid="uid://cg2160566qqkh" path="res://objects/SpawnPoint.tscn" id="3_xdqhp"]
-[ext_resource type="PackedScene" uid="uid://d276sd51losjc" path="res://objects/player/RagdollCharacter.tscn" id="4_kadr7"]
+[ext_resource type="PackedScene" uid="uid://d276sd51losjc" path="res://objects/player/ragdoll/RagdollCharacter.tscn" id="4_kadr7"]
 
 [sub_resource type="Environment" id="Environment_5hyia"]
 background_energy_multiplier = 1.26

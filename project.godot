@@ -22,6 +22,7 @@ GravityManager="*uid://sdk62a0pdqqy"
 CameraManager="*uid://dixujmwmb8vti"
 ConsoleOveraly="*uid://ddjr0s7mcf80h"
 PoseManager="res://world/PoseManager.cs"
+JointWatchManager="res://world/JointWatchManager.cs"
 
 [blendporter]
 
