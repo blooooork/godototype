@@ -29,6 +29,7 @@ public partial class RagdollCharacter : Node3D
     // Actions
     private Action<string> _onJump;
     private Action<string> _onCrouch;
+    private Action<string> _onCrouchRelease;
     // Raycasts
     private RayCast3D _rayForward;
     private RayCast3D _rayBack;
@@ -48,6 +49,7 @@ public partial class RagdollCharacter : Node3D
     private Generic6DofJoint3D _rightKnee;
     private Generic6DofJoint3D _leftAnkle;
     private Generic6DofJoint3D _rightAnkle;
+    private Generic6DofJoint3D[] _joints;
     // Joint bodies
     private RigidBody3D _neckBody;
     private RigidBody3D _lShoulderBody;
@@ -104,6 +106,14 @@ public partial class RagdollCharacter : Node3D
         _rightHip      = GetNode<Generic6DofJoint3D>("RightLeg/RHip/RHipJoint");
         _rightKnee     = GetNode<Generic6DofJoint3D>("RightLeg/RKnee/RKneeJoint");
         _rightAnkle    = GetNode<Generic6DofJoint3D>("RightLeg/RAnkle/RAnkleJoint");
+        _joints =
+        [
+            _neckJoint,
+            _leftShoulder, _leftElbow, _leftWrist,
+            _rightShoulder, _rightElbow, _rightWrist,
+            _leftHip, _leftKnee, _leftAnkle,
+            _rightHip, _rightKnee, _rightAnkle,
+        ];
         // Get joint bodies
         _neckBody      = GetNode<RigidBody3D>("Neck");
         _lShoulderBody = GetNode<RigidBody3D>("LeftArm/LShoulder");
@@ -163,8 +173,10 @@ public partial class RagdollCharacter : Node3D
         foreach (var body in all)
             _restTransforms[body] = body.Transform;
         // Register actions
-        InputManager.Subscribe(nameof(GameAction.Jump),   onJustPressed: _onJump   = _ => Jump());
-        InputManager.Subscribe(nameof(GameAction.Crouch), onJustPressed: _onCrouch = _ => Crouch());
+        InputManager.Subscribe(nameof(GameAction.Jump),   onJustPressed: _onJump = _ => Jump());
+        InputManager.Subscribe(nameof(GameAction.Crouch),
+            onJustPressed:  _onCrouch        = _ => Ragdoll(),
+            onJustReleased: _onCrouchRelease = _ => StandUp());
         Callable.From(() => _camera.SetFocus(_torso)).CallDeferred();
         base._EnterTree();
     }
@@ -172,7 +184,7 @@ public partial class RagdollCharacter : Node3D
     public override void _ExitTree()
     {
         InputManager.Unsubscribe(nameof(GameAction.Jump),   onJustPressed: _onJump);
-        InputManager.Unsubscribe(nameof(GameAction.Crouch), _onCrouch);
+        InputManager.Unsubscribe(nameof(GameAction.Crouch), onJustPressed: _onCrouch, onJustReleased: _onCrouchRelease);
         _camera.ClearFocus();
         CameraManager.Instance.Release(_cameraClaim);
         base._ExitTree();
@@ -263,8 +275,34 @@ public partial class RagdollCharacter : Node3D
             _torso.ApplyCentralImpulse(Vector3.Up * JumpForce * _torso.Mass);
     }
 
-    private void Crouch()
+    private void Ragdoll()
     {
+        foreach (var j in _joints)
+        {
+            j.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularSpring, false);
+            j.SetFlagY(Generic6DofJoint3D.Flag.EnableAngularSpring, false);
+            j.SetFlagZ(Generic6DofJoint3D.Flag.EnableAngularSpring, false);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+        }
+    }
 
+    private void StandUp()
+    {
+        var s = SpringStiffness;
+        var d = SpringDamping;
+        foreach (var j in _joints)
+        {
+            j.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularSpring, true);
+            j.SetFlagY(Generic6DofJoint3D.Flag.EnableAngularSpring, true);
+            j.SetFlagZ(Generic6DofJoint3D.Flag.EnableAngularSpring, true);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+        }
     }
 }
