@@ -36,6 +36,8 @@ height = 0.8
 
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
+SpringStiffness = 5.0
+SpringDamping = 1.0
 
 [node name="Head" type="RigidBody3D" parent="." unique_id=1882174124]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0.7562031, 0)
@@ -98,7 +100,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="LShoulderJoint" type="HingeJoint3D" parent="LeftArm/LShoulder" unique_id=2072101579]
+[node name="LShoulderJoint" type="Generic6DOFJoint3D" parent="LeftArm/LShoulder" unique_id=481742081]
 node_a = NodePath("../../../Torso")
 node_b = NodePath("../../LUArm")
 
@@ -128,7 +130,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="LElbowJoint" type="HingeJoint3D" parent="LeftArm/LElbow" unique_id=85718685]
+[node name="LElbowJoint" type="Generic6DOFJoint3D" parent="LeftArm/LElbow" unique_id=2051236305]
 node_a = NodePath("../../LUArm")
 node_b = NodePath("../../LLArm")
 
@@ -153,12 +155,12 @@ shape = ExtResource("4_gr4vs")
 mesh = ExtResource("5_yt38l")
 
 [node name="LWrist" type="RigidBody3D" parent="LeftArm" unique_id=202167507]
-transform = Transform3D(-4.371139e-08, 0, 1, 1.6420284e-15, 1, 0, -1, -8.351872e-23, -4.371139e-08, 0, -0.15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.15, 0)
 collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="LWristJoint" type="HingeJoint3D" parent="LeftArm/LWrist" unique_id=51042226]
+[node name="LWristJoint" type="Generic6DOFJoint3D" parent="LeftArm/LWrist" unique_id=861871597]
 node_a = NodePath("../../LLArm")
 node_b = NodePath("../../LHand")
 
@@ -191,7 +193,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="RShoulderJoint" type="HingeJoint3D" parent="RightArm/RShoulder" unique_id=1853430507]
+[node name="RShoulderJoint" type="Generic6DOFJoint3D" parent="RightArm/RShoulder" unique_id=998943023]
 node_a = NodePath("../../../Torso")
 node_b = NodePath("../../RUArm")
 
@@ -221,7 +223,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="RElbowJoint" type="HingeJoint3D" parent="RightArm/RElbow" unique_id=1484412807]
+[node name="RElbowJoint" type="Generic6DOFJoint3D" parent="RightArm/RElbow" unique_id=1214563404]
 node_a = NodePath("../../RUArm")
 node_b = NodePath("../../RLArm")
 
@@ -252,7 +254,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="RWristJoint" type="HingeJoint3D" parent="RightArm/RWrist" unique_id=1448250391]
+[node name="RWristJoint" type="Generic6DOFJoint3D" parent="RightArm/RWrist" unique_id=1677397682]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
 node_a = NodePath("../../RLArm")
 node_b = NodePath("../../RHand")
@@ -316,7 +318,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="LKneeJoint" type="HingeJoint3D" parent="LeftLeg/LKnee" unique_id=2074445148]
+[node name="LKneeJoint" type="Generic6DOFJoint3D" parent="LeftLeg/LKnee" unique_id=1979125174]
 node_a = NodePath("../../LULeg")
 node_b = NodePath("../../LLLeg")
 
@@ -346,7 +348,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="LAnkleJoint" type="HingeJoint3D" parent="LeftLeg/LAnkle" unique_id=1174092126]
+[node name="LAnkleJoint" type="Generic6DOFJoint3D" parent="LeftLeg/LAnkle" unique_id=1429530419]
 node_a = NodePath("../../LLLeg")
 node_b = NodePath("../../LeftFoot")
 
@@ -409,7 +411,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="RKneeJoint" type="HingeJoint3D" parent="RightLeg/RKnee" unique_id=1373806928]
+[node name="RKneeJoint" type="Generic6DOFJoint3D" parent="RightLeg/RKnee" unique_id=784716491]
 node_a = NodePath("../../RULeg")
 node_b = NodePath("../../RLLeg")
 
@@ -439,7 +441,7 @@ collision_layer = 0
 collision_mask = 0
 mass = 0.001
 
-[node name="RAnkleJoint" type="HingeJoint3D" parent="RightLeg/RAnkle" unique_id=1143695662]
+[node name="RAnkleJoint" type="Generic6DOFJoint3D" parent="RightLeg/RAnkle" unique_id=1465216050]
 node_a = NodePath("../../RLLeg")
 node_b = NodePath("../../RightFoot")
 

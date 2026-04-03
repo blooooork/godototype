@@ -1,6 +1,7 @@
 using Godot;
 using godototype.constants;
 using godototype.input;
+using godototype.world;
 using System;
 using System.Collections.Generic;
 using godototype.camera;
@@ -17,7 +18,11 @@ public partial class RagdollCharacter : Node3D
         LeftLeg, RightLeg, Legs,
     }
 
-    [Export] public float JumpForce { get; set; } = 15f;
+    [Export] public float JumpForce      { get; set; } = 15f;
+    [Export] public float SpringStiffness { get; set; } = 50f;
+    [Export] public float SpringDamping   { get; set; } = 5f;
+
+    private Dictionary<RigidBody3D, Transform3D> _restTransforms;
 
     private IVirtualCamera _camera;
     private CameraClaim _cameraClaim;
@@ -31,18 +36,18 @@ public partial class RagdollCharacter : Node3D
     private RayCast3D _rayRight;
     // Joints
     private Generic6DofJoint3D _neckJoint;
-    private HingeJoint3D _leftShoulder;
-    private HingeJoint3D _rightShoulder;
-    private HingeJoint3D _leftElbow;
-    private HingeJoint3D _rightElbow;
-    private HingeJoint3D _leftWrist;
-    private HingeJoint3D _rightWrist;
+    private Generic6DofJoint3D _leftShoulder;
+    private Generic6DofJoint3D _rightShoulder;
+    private Generic6DofJoint3D _leftElbow;
+    private Generic6DofJoint3D _rightElbow;
+    private Generic6DofJoint3D _leftWrist;
+    private Generic6DofJoint3D _rightWrist;
     private Generic6DofJoint3D _leftHip;
     private Generic6DofJoint3D _rightHip;
-    private HingeJoint3D _leftKnee;
-    private HingeJoint3D _rightKnee;
-    private HingeJoint3D _leftAnkle;
-    private HingeJoint3D _rightAnkle;
+    private Generic6DofJoint3D _leftKnee;
+    private Generic6DofJoint3D _rightKnee;
+    private Generic6DofJoint3D _leftAnkle;
+    private Generic6DofJoint3D _rightAnkle;
     // Joint bodies
     private RigidBody3D _neckBody;
     private RigidBody3D _lShoulderBody;
@@ -87,18 +92,18 @@ public partial class RagdollCharacter : Node3D
         _rayRight   = GetNode<RayCast3D>("RightRay");
         // Get joints
         _neckJoint     = GetNode<Generic6DofJoint3D>("Neck/NeckJoint");
-        _leftShoulder  = GetNode<HingeJoint3D>("LeftArm/LShoulder/LShoulderJoint");
-        _leftElbow     = GetNode<HingeJoint3D>("LeftArm/LElbow/LElbowJoint");
-        _leftWrist     = GetNode<HingeJoint3D>("LeftArm/LWrist/LWristJoint");
-        _rightShoulder = GetNode<HingeJoint3D>("RightArm/RShoulder/RShoulderJoint");
-        _rightElbow    = GetNode<HingeJoint3D>("RightArm/RElbow/RElbowJoint");
-        _rightWrist    = GetNode<HingeJoint3D>("RightArm/RWrist/RWristJoint");
+        _leftShoulder  = GetNode<Generic6DofJoint3D>("LeftArm/LShoulder/LShoulderJoint");
+        _leftElbow     = GetNode<Generic6DofJoint3D>("LeftArm/LElbow/LElbowJoint");
+        _leftWrist     = GetNode<Generic6DofJoint3D>("LeftArm/LWrist/LWristJoint");
+        _rightShoulder = GetNode<Generic6DofJoint3D>("RightArm/RShoulder/RShoulderJoint");
+        _rightElbow    = GetNode<Generic6DofJoint3D>("RightArm/RElbow/RElbowJoint");
+        _rightWrist    = GetNode<Generic6DofJoint3D>("RightArm/RWrist/RWristJoint");
         _leftHip       = GetNode<Generic6DofJoint3D>("LeftLeg/LHip/LHipJoint");
-        _leftKnee      = GetNode<HingeJoint3D>("LeftLeg/LKnee/LKneeJoint");
-        _leftAnkle     = GetNode<HingeJoint3D>("LeftLeg/LAnkle/LAnkleJoint");
+        _leftKnee      = GetNode<Generic6DofJoint3D>("LeftLeg/LKnee/LKneeJoint");
+        _leftAnkle     = GetNode<Generic6DofJoint3D>("LeftLeg/LAnkle/LAnkleJoint");
         _rightHip      = GetNode<Generic6DofJoint3D>("RightLeg/RHip/RHipJoint");
-        _rightKnee     = GetNode<HingeJoint3D>("RightLeg/RKnee/RKneeJoint");
-        _rightAnkle    = GetNode<HingeJoint3D>("RightLeg/RAnkle/RAnkleJoint");
+        _rightKnee     = GetNode<Generic6DofJoint3D>("RightLeg/RKnee/RKneeJoint");
+        _rightAnkle    = GetNode<Generic6DofJoint3D>("RightLeg/RAnkle/RAnkleJoint");
         // Get joint bodies
         _neckBody      = GetNode<RigidBody3D>("Neck");
         _lShoulderBody = GetNode<RigidBody3D>("LeftArm/LShoulder");
@@ -141,6 +146,7 @@ public partial class RagdollCharacter : Node3D
             _lHipBody, _lKneeBody, _lAnkleBody,
             _rHipBody, _rKneeBody, _rAnkleBody,
         ];
+        List<RigidBody3D> all = [..parts, ..jointBodies];
         _bodies = new Dictionary<BodyGroup, List<RigidBody3D>>
         {
             [BodyGroup.LeftArm]     = leftArm,
@@ -151,12 +157,15 @@ public partial class RagdollCharacter : Node3D
             [BodyGroup.Legs]        = [..leftLeg,  ..rightLeg],
             [BodyGroup.Parts]       = parts,
             [BodyGroup.JointBodies] = jointBodies,
-            [BodyGroup.All]         = [..parts,    ..jointBodies],
+            [BodyGroup.All]         = all
         };
-        _camera.SetFocus(_torso);
+        _restTransforms = new Dictionary<RigidBody3D, Transform3D>(all.Count);
+        foreach (var body in all)
+            _restTransforms[body] = body.Transform;
         // Register actions
         InputManager.Subscribe(nameof(GameAction.Jump),   onJustPressed: _onJump   = _ => Jump());
         InputManager.Subscribe(nameof(GameAction.Crouch), onJustPressed: _onCrouch = _ => Crouch());
+        Callable.From(() => _camera.SetFocus(_torso)).CallDeferred();
         base._EnterTree();
     }
 
@@ -167,6 +176,79 @@ public partial class RagdollCharacter : Node3D
         _camera.ClearFocus();
         CameraManager.Instance.Release(_cameraClaim);
         base._ExitTree();
+    }
+
+    public override void _Ready()
+    {
+        var s = SpringStiffness;
+        var d = SpringDamping;
+
+        // Cfg(joint, stiffness, damping, xLow, xHigh, yLow, yHigh, zLow, zHigh) — degrees
+        // Equal low/high = locked axis. Spring equilibrium is always 0 (spawn = T-pose).
+        static void Cfg(Generic6DofJoint3D j, float s, float d,
+            float xL, float xH, float yL, float yH, float zL, float zH)
+        {
+            // Lock all linear axes
+            j.SetFlagX(Generic6DofJoint3D.Flag.EnableLinearLimit, true);
+            j.SetFlagY(Generic6DofJoint3D.Flag.EnableLinearLimit, true);
+            j.SetFlagZ(Generic6DofJoint3D.Flag.EnableLinearLimit, true);
+            j.SetParamX(Generic6DofJoint3D.Param.LinearLowerLimit, 0f);
+            j.SetParamX(Generic6DofJoint3D.Param.LinearUpperLimit, 0f);
+            j.SetParamY(Generic6DofJoint3D.Param.LinearLowerLimit, 0f);
+            j.SetParamY(Generic6DofJoint3D.Param.LinearUpperLimit, 0f);
+            j.SetParamZ(Generic6DofJoint3D.Param.LinearLowerLimit, 0f);
+            j.SetParamZ(Generic6DofJoint3D.Param.LinearUpperLimit, 0f);
+
+            var xLocked = Mathf.IsEqualApprox(xL, xH);
+            j.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularLimit, true);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularLowerLimit, Mathf.DegToRad(xL));
+            j.SetParamX(Generic6DofJoint3D.Param.AngularUpperLimit, Mathf.DegToRad(xH));
+            j.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularSpring, !xLocked);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, xLocked ? 0f : s);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   xLocked ? 0f : d);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
+
+            var yLocked = Mathf.IsEqualApprox(yL, yH);
+            j.SetFlagY(Generic6DofJoint3D.Flag.EnableAngularLimit, true);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularLowerLimit, Mathf.DegToRad(yL));
+            j.SetParamY(Generic6DofJoint3D.Param.AngularUpperLimit, Mathf.DegToRad(yH));
+            j.SetFlagY(Generic6DofJoint3D.Flag.EnableAngularSpring, !yLocked);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, yLocked ? 0f : s);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   yLocked ? 0f : d);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
+
+            var zLocked = Mathf.IsEqualApprox(zL, zH);
+            j.SetFlagZ(Generic6DofJoint3D.Flag.EnableAngularLimit, true);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularLowerLimit, Mathf.DegToRad(zL));
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularUpperLimit, Mathf.DegToRad(zH));
+            j.SetFlagZ(Generic6DofJoint3D.Flag.EnableAngularSpring, !zLocked);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, zLocked ? 0f : s);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   zLocked ? 0f : d);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
+        }
+
+        // Neck: limited ball-and-socket
+        Cfg(_neckJoint,     s * 0.5f, d,  -30f, 30f,  -45f, 45f,  -30f, 30f);
+        // Shoulders: ball-and-socket
+        Cfg(_leftShoulder,  s, d,  -90f, 90f,  -45f, 45f,  -90f, 90f);
+        Cfg(_rightShoulder, s, d,  -90f, 90f,  -45f, 45f,  -90f, 90f);
+        // Elbows: hinge — bends on X only, no hyperextension
+        Cfg(_leftElbow,     s, d, -135f,  5f,    0f,  0f,    0f,  0f);
+        Cfg(_rightElbow,    s, d, -135f,  5f,    0f,  0f,    0f,  0f);
+        // Wrists: flex/extend only
+        Cfg(_leftWrist,     s, d,  -30f, 30f,    0f,  0f,    0f,  0f);
+        Cfg(_rightWrist,    s, d,  -30f, 30f,    0f,  0f,    0f,  0f);
+        // Hips: ball-and-socket
+        Cfg(_leftHip,       s, d,  -90f, 90f,  -30f, 30f,  -45f, 45f);
+        Cfg(_rightHip,      s, d,  -90f, 90f,  -30f, 30f,  -45f, 45f);
+        // Knees: hinge — bends on X only, no hyperextension
+        Cfg(_leftKnee,      s, d, -130f,  5f,    0f,  0f,    0f,  0f);
+        Cfg(_rightKnee,     s, d, -130f,  5f,    0f,  0f,    0f,  0f);
+        // Ankles: flex/extend + slight inversion
+        Cfg(_leftAnkle,     s, d,  -30f, 30f,    0f,  0f,  -15f, 15f);
+        Cfg(_rightAnkle,    s, d,  -30f, 30f,    0f,  0f,  -15f, 15f);
+
+        base._Ready();
     }
 
     private bool IsGrounded() =>
