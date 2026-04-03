@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://d3vg0vpe0omtc"]
+
+[ext_resource type="Shape3D" uid="uid://nnya7xu07w4u" path="res://objects/player/resources/TorsoShape.tres" id="1_jhhni"]
+[ext_resource type="Script" uid="uid://h2f72iqbi0jg" path="res://objects/player/ragdoll/limbs/Torso.cs" id="1_v0nfg"]
+[ext_resource type="CapsuleMesh" uid="uid://ccbwaosj1hcn5" path="res://objects/player/resources/TorsoMesh.tres" id="2_v0nfg"]
+
+[node name="Torso" type="Node3D" unique_id=695377178]
+script = ExtResource("1_v0nfg")
+
+[node name="UTorso" type="RigidBody3D" parent="." unique_id=1802638367]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.315, 0.0089535415)
+mass = 0.15
+
+[node name="UTorsoCollide" type="CollisionShape3D" parent="UTorso" unique_id=2016175994]
+shape = ExtResource("1_jhhni")
+
+[node name="UTorsoMesh" type="MeshInstance3D" parent="UTorso" unique_id=376151612]
+mesh = ExtResource("2_v0nfg")
+
+[node name="UTorsoJoint" type="Generic6DOFJoint3D" parent="." unique_id=1887371517]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.20824328, 0)
+node_a = NodePath("../UTorso")
+node_b = NodePath("../MTorso")
+
+[node name="MTorso" type="RigidBody3D" parent="." unique_id=1348521100]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, 0.106, 0.00017890334)
+mass = 0.15
+
+[node name="MTorsoCollide" type="CollisionShape3D" parent="MTorso" unique_id=878066985]
+shape = ExtResource("1_jhhni")
+
+[node name="MTorsoMesh" type="MeshInstance3D" parent="MTorso" unique_id=1612009134]
+mesh = ExtResource("2_v0nfg")
+
+[node name="LTorsoJoint" type="Generic6DOFJoint3D" parent="." unique_id=923707911]
+node_a = NodePath("../MTorso")
+node_b = NodePath("../LTorso")
+
+[node name="LTorso" type="RigidBody3D" parent="." unique_id=219171999]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.103, 0.01693125)
+mass = 0.15
+
+[node name="LTorsoCollide" type="CollisionShape3D" parent="LTorso" unique_id=1545267792]
+shape = ExtResource("1_jhhni")
+
+[node name="LTorsoMesh" type="MeshInstance3D" parent="LTorso" unique_id=1167115886]
+mesh = ExtResource("2_v0nfg")

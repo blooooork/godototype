@@ -5,8 +5,8 @@ namespace godototype.objects.player.ragdoll.limbs;
 
 public abstract partial class Limb : Node3D
 {
-    [Export] public RigidBody3D Anchor { get; set; }
-    [Export] public bool PinToWorld    { get; set; }
+    [Export] public RigidBody3D Anchor    { get; set; }
+    [Export] public bool        PinToWorld { get; set; }
 
     protected abstract string AttachJointPath { get; }
 
@@ -25,7 +25,6 @@ public abstract partial class Limb : Node3D
         {
             _attachJoint.QueueFree();
         }
-        // PinToWorld=true: leave node_a empty, Jolt anchors to world at joint position
 
         base._Ready();
     }
@@ -48,6 +47,6 @@ public abstract partial class Limb : Node3D
     private void OnSevered()
     {
         _attachJoint = null;
-        Anchor = null;
+        Anchor       = null;
     }
 }
