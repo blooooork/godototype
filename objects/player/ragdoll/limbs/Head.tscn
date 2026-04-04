@@ -15,7 +15,7 @@ height = 0.5
 script = ExtResource("1_y34gu")
 
 [node name="Skull" type="RigidBody3D" parent="." unique_id=21087641]
-mass = 0.05
+mass = 0.35
 
 [node name="HeadCollide" type="CollisionShape3D" parent="Skull" unique_id=346083675]
 shape = SubResource("SphereShape3D_4kvum")

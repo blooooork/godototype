@@ -35,7 +35,7 @@ node_b = NodePath("..")
 
 [node name="UArm" type="RigidBody3D" parent="." unique_id=612124908]
 transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, 0, 0.26, 0)
-mass = 0.05
+mass = 0.1
 
 [node name="UArmCollide" type="CollisionShape3D" parent="UArm" unique_id=1468117011]
 shape = ExtResource("3_wpp0n")
@@ -65,7 +65,7 @@ node_b = NodePath("../../UArm")
 
 [node name="LArm" type="RigidBody3D" parent="." unique_id=88158467]
 transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, -6.0337975e-09, -0.016374648, 0)
-mass = 0.05
+mass = 0.1
 
 [node name="LArmCollide" type="CollisionShape3D" parent="LArm" unique_id=669949177]
 shape = ExtResource("5_tpq0t")
@@ -95,7 +95,7 @@ node_b = NodePath("..")
 
 [node name="Hand" type="RigidBody3D" parent="." unique_id=594668503]
 transform = Transform3D(1, 0, 0, 0, 1, -8.351872e-23, 0, -8.351872e-23, 1, 0, -0.25, 0)
-mass = 0.025
+mass = 0.15
 
 [node name="HandCollide" type="CollisionShape3D" parent="Hand" unique_id=370698494]
 shape = ExtResource("7_4g7qm")

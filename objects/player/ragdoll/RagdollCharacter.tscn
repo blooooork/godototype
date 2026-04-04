@@ -7,36 +7,36 @@
 [ext_resource type="PackedScene" uid="uid://c11ctfan6g5iu" path="res://objects/player/ragdoll/limbs/Arm.tscn" id="6_tw8h2"]
 [ext_resource type="PackedScene" uid="uid://c14jtdoao3dah" path="res://objects/player/ragdoll/limbs/Leg.tscn" id="7_ns8cp"]
 [ext_resource type="Script" uid="uid://to6rapf4ird" path="res://objects/player/ragdoll/BalanceController.cs" id="8_balctrl"]
-[ext_resource type="Script" uid="uid://cgr43mwcyoc7w" path="res://objects/player/ragdoll/FootStepper.cs" id="9_ftstep"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_ns8cp"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aaawk"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_bma2p"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_ns8cp"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i6eow"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bma2p"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_yobyq"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_i6eow"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lyqat"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_yobyq"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_1vdsp"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_lyqat"]
 radius = 0.15
 height = 0.5
 
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
-SpringStiffness = 5.0
-SpringDamping = 1.0
+JumpForce = 30.0
+PassiveStiffness = 0.5
+TPoseStiffness = 20.0
 
 [node name="Head" parent="." unique_id=2063455393 node_paths=PackedStringArray("Anchor") instance=ExtResource("2_hmmqc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.756, -0.012)
@@ -46,43 +46,42 @@ Anchor = NodePath("../Torso/Segment0")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.118, -0.018)
 SegmentWidth = 0.5
 SegmentSpacing = 0.2
-TotalMass = 0.75
 
 [node name="Segment0" type="RigidBody3D" parent="Torso" unique_id=1709882624]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.2, 0)
-mass = 0.25
+mass = 0.33333334
 
 [node name="Segment0Col" type="CollisionShape3D" parent="Torso/Segment0" unique_id=998262334]
-shape = SubResource("CapsuleShape3D_ns8cp")
+shape = SubResource("CapsuleShape3D_aaawk")
 
 [node name="Segment0Mesh" type="MeshInstance3D" parent="Torso/Segment0" unique_id=1774280116]
-mesh = SubResource("CapsuleMesh_bma2p")
+mesh = SubResource("CapsuleMesh_ns8cp")
 
 [node name="Camera" parent="Torso/Segment0" unique_id=1586058199 instance=ExtResource("1_qndj1")]
 transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.31800002, 0, 0.018)
 
 [node name="CameraContainer" parent="Torso/Segment0/Camera" index="0" unique_id=2406803]
-transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881904, 0, -0.25881904, 0.9659258, 0, 3, 5)
+transform = Transform3D(1, 0, 0, 0, 0.96592563, 0.25881898, 0, -0.25881898, 0.96592563, 0, 3, 5)
 
 [node name="Segment1" type="RigidBody3D" parent="Torso" unique_id=1088368304]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
-mass = 0.25
+mass = 0.33333334
 
 [node name="Segment1Col" type="CollisionShape3D" parent="Torso/Segment1" unique_id=1936746306]
-shape = SubResource("CapsuleShape3D_i6eow")
+shape = SubResource("CapsuleShape3D_bma2p")
 
 [node name="Segment1Mesh" type="MeshInstance3D" parent="Torso/Segment1" unique_id=822870555]
-mesh = SubResource("CapsuleMesh_yobyq")
+mesh = SubResource("CapsuleMesh_i6eow")
 
 [node name="Segment2" type="RigidBody3D" parent="Torso" unique_id=1549057748]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.2, 0)
-mass = 0.25
+mass = 0.33333334
 
 [node name="Segment2Col" type="CollisionShape3D" parent="Torso/Segment2" unique_id=329248352]
-shape = SubResource("CapsuleShape3D_lyqat")
+shape = SubResource("CapsuleShape3D_yobyq")
 
 [node name="Segment2Mesh" type="MeshInstance3D" parent="Torso/Segment2" unique_id=732869121]
-mesh = SubResource("CapsuleMesh_1vdsp")
+mesh = SubResource("CapsuleMesh_lyqat")
 
 [node name="Joint0_1" type="Generic6DOFJoint3D" parent="Torso" unique_id=1225603397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
@@ -112,16 +111,5 @@ Anchor = NodePath("../Torso/Segment2")
 
 [node name="BalanceController" type="Node" parent="." unique_id=618791085]
 script = ExtResource("8_balctrl")
-
-[node name="LeftFootStepper" type="Node" parent="." unique_id=1235091991 node_paths=PackedStringArray("Foot", "OtherStepper")]
-script = ExtResource("9_ftstep")
-Foot = NodePath("../LeftLeg/Foot")
-OtherStepper = NodePath("../RightFootStepper")
-LateralOffset = -0.2
-
-[node name="RightFootStepper" type="Node" parent="." unique_id=2049384158 node_paths=PackedStringArray("Foot", "OtherStepper")]
-script = ExtResource("9_ftstep")
-Foot = NodePath("../RightLeg/Foot")
-OtherStepper = NodePath("../LeftFootStepper")
 
 [editable path="Torso/Segment0/Camera"]

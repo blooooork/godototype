@@ -35,7 +35,7 @@ node_b = NodePath("..")
 
 [node name="ULeg" type="RigidBody3D" parent="." unique_id=398798659]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
-mass = 0.05
+mass = 0.1
 
 [node name="ULegCollide" type="CollisionShape3D" parent="ULeg" unique_id=1552021694]
 shape = ExtResource("3_8d3at")
@@ -65,7 +65,7 @@ node_b = NodePath("../../ULeg")
 
 [node name="LLeg" type="RigidBody3D" parent="." unique_id=1600691418]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.30524492, 0)
-mass = 0.05
+mass = 0.1
 
 [node name="LLegMesh" type="MeshInstance3D" parent="LLeg" unique_id=1916484948]
 mesh = ExtResource("5_f7071")
@@ -95,7 +95,7 @@ node_b = NodePath("..")
 
 [node name="Foot" type="RigidBody3D" parent="." unique_id=1927056736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.5, 0)
-mass = 0.025
+mass = 0.2
 
 [node name="FootCollide" type="CollisionShape3D" parent="Foot" unique_id=1918599764]
 shape = ExtResource("7_uergi")
@@ -104,4 +104,8 @@ shape = ExtResource("7_uergi")
 mesh = ExtResource("8_rlvk5")
 
 [node name="GroundRay" type="RayCast3D" parent="Foot" unique_id=1847392015]
-target_position = Vector3(0, -0.15, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.059630394, 0, -2.6065272e-09)
+target_position = Vector3(0, -0.3, 0)
+
+[node name="FootTarget" type="Node3D" parent="." unique_id=999888777]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.44, 0)
