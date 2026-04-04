@@ -102,3 +102,6 @@ shape = ExtResource("7_uergi")
 
 [node name="FootMesh" type="MeshInstance3D" parent="Foot" unique_id=1282476204]
 mesh = ExtResource("8_rlvk5")
+
+[node name="GroundRay" type="RayCast3D" parent="Foot" unique_id=1847392015]
+target_position = Vector3(0, -0.15, 0)

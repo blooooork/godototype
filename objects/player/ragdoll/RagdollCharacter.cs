@@ -1,14 +1,18 @@
 using Godot;
+using blendporter.definition;
+using blendporter.service;
 using godototype.constants;
 using godototype.input;
+using godototype.objects.player.ragdoll;
 using godototype.objects.player.ragdoll.limbs;
 using System;
 using System.Collections.Generic;
 using godototype.camera;
+using godototype.world;
 
 namespace godototype.objects.player;
 
-public partial class RagdollCharacter : Node3D
+public partial class RagdollCharacter : Node3D, IResettable
 {
     public enum BodyGroup
     {
@@ -24,13 +28,21 @@ public partial class RagdollCharacter : Node3D
     [Export] public float SpringDamping   { get; set; } = 5f;
 
     private Dictionary<RigidBody3D, Transform3D> _restTransforms;
+    private Dictionary<RigidBody3D, Transform3D> _restOffsets;
 
-    private IVirtualCamera _camera;
-    private CameraClaim    _cameraClaim;
+    private IVirtualCamera    _camera;
+    private Node3D            _cameraNode;
+    private Transform3D       _cameraRestTransform;
+    private CameraClaim       _cameraClaim;
+    private BalanceController _balanceController;
+    private FootStepper       _leftFootStepper;
+    private FootStepper       _rightFootStepper;
+    private Action<double>    _onCameraTick;
     // Actions
     private Action<string> _onJump;
     private Action<string> _onCrouch;
     private Action<string> _onCrouchRelease;
+    private Action<string> _onForward, _onBackward, _onStrafeLeft, _onStrafeRight, _onRotateLeft, _onRotateRight;
     // Joints
     private Generic6DofJoint3D   _neckJoint;
     private Generic6DofJoint3D   _leftShoulder;
@@ -83,8 +95,22 @@ public partial class RagdollCharacter : Node3D
     public override void _EnterTree()
     {
         // Get camera
-        _camera      = GetNode<IVirtualCamera>(new NodePath("Camera"));
+        _camera              = GetNode<IVirtualCamera>(new NodePath("Torso/Segment0/Camera"));
+        _cameraNode          = GetNode<Node3D>("Torso/Segment0/Camera");
+        _cameraRestTransform = _cameraNode.Transform;
         _cameraClaim = CameraManager.Instance.Request(_camera, priority: 20);
+
+        PoseManager.Register(_onCameraTick = _ =>
+        {
+            if (_cameraNode == null || !IsInstanceValid(_cameraNode)) return;
+            var g = _cameraNode.GlobalRotation;
+            _cameraNode.GlobalRotation = new Vector3(0f, g.Y, 0f);
+        });
+
+        // Optional balance/stepper components (present in v3 scene, absent in v2)
+        _balanceController = GetNodeOrNull<BalanceController>("BalanceController");
+        _leftFootStepper   = GetNodeOrNull<FootStepper>("LeftFootStepper");
+        _rightFootStepper  = GetNodeOrNull<FootStepper>("RightFootStepper");
 
         CallDeferred(new StringName("GetTorsoNodes"));
 
@@ -173,6 +199,7 @@ public partial class RagdollCharacter : Node3D
         };
 
         _restTransforms = new Dictionary<RigidBody3D, Transform3D>(all.Count);
+        _restOffsets    = new Dictionary<RigidBody3D, Transform3D>(all.Count);
         foreach (var body in all)
             _restTransforms[body] = body.Transform;
 
@@ -182,13 +209,27 @@ public partial class RagdollCharacter : Node3D
             onJustPressed:  _onCrouch        = _ => Ragdoll(),
             onJustReleased: _onCrouchRelease = _ => StandUp());
 
+        InputManager.Subscribe(nameof(GameAction.Forward),     onJustPressed: _onForward     = _ => UpdateInputDir(), onJustReleased: _onForward);
+        InputManager.Subscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward    = _ => UpdateInputDir(), onJustReleased: _onBackward);
+        InputManager.Subscribe(nameof(GameAction.StrafeLeft),  onJustPressed: _onStrafeLeft  = _ => UpdateInputDir(), onJustReleased: _onStrafeLeft);
+        InputManager.Subscribe(nameof(GameAction.StrafeRight), onJustPressed: _onStrafeRight = _ => UpdateInputDir(), onJustReleased: _onStrafeRight);
+        InputManager.Subscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft  = _ => UpdateInputDir(), onJustReleased: _onRotateLeft);
+        InputManager.Subscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight = _ => UpdateInputDir(), onJustReleased: _onRotateRight);
+
         base._EnterTree();
     }
 
     public override void _ExitTree()
     {
-        InputManager.Unsubscribe(nameof(GameAction.Jump),   onJustPressed: _onJump);
-        InputManager.Unsubscribe(nameof(GameAction.Crouch), onJustPressed: _onCrouch, onJustReleased: _onCrouchRelease);
+        InputManager.Unsubscribe(nameof(GameAction.Jump),        onJustPressed: _onJump);
+        InputManager.Unsubscribe(nameof(GameAction.Crouch),      onJustPressed: _onCrouch,      onJustReleased: _onCrouchRelease);
+        InputManager.Unsubscribe(nameof(GameAction.Forward),     onJustPressed: _onForward,     onJustReleased: _onForward);
+        InputManager.Unsubscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward,    onJustReleased: _onBackward);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeLeft),  onJustPressed: _onStrafeLeft,  onJustReleased: _onStrafeLeft);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeRight), onJustPressed: _onStrafeRight, onJustReleased: _onStrafeRight);
+        InputManager.Unsubscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft,  onJustReleased: _onRotateLeft);
+        InputManager.Unsubscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight, onJustReleased: _onRotateRight);
+        PoseManager.Unregister(_onCameraTick);
         _camera.ClearFocus();
         CameraManager.Instance.Release(_cameraClaim);
         base._ExitTree();
@@ -269,12 +310,19 @@ public partial class RagdollCharacter : Node3D
         Cfg(_leftAnkle,     s, d,  -30f,  30f,    0f,  0f,  -15f,  15f);
         Cfg(_rightAnkle,    s, d,  -30f,  30f,    0f,  0f,  -15f,  15f);
 
+        // Capture root-relative spawn offsets for all non-torso bodies.
+        // _Ready fires after SpawnPoint positions the node, so GlobalTransform is valid.
+        var rootInv = GlobalTransform.AffineInverse();
+        foreach (var body in _bodies[BodyGroup.All])
+            _restOffsets[body] = rootInv * body.GlobalTransform;
+
         base._Ready();
     }
 
     private void Jump()
     {
         _lTorso.ApplyCentralImpulse(Vector3.Up * JumpForce * _lTorso.Mass);
+        _balanceController?.OnJump();
     }
 
     private void Ragdoll()
@@ -288,6 +336,9 @@ public partial class RagdollCharacter : Node3D
             j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
         }
+        _balanceController?.Disable();
+        _leftFootStepper?.Disable();
+        _rightFootStepper?.Disable();
     }
 
     private void StandUp()
@@ -306,10 +357,60 @@ public partial class RagdollCharacter : Node3D
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
         }
+        _balanceController?.StandUp();
+        _leftFootStepper?.Enable();
+        _rightFootStepper?.Enable();
     }
     
+    public void Reset(Transform3D spawnTransform)
+    {
+        // Root
+        GlobalTransform = spawnTransform;
+
+        // All physics bodies — teleport + zero velocity via physics server
+        foreach (var (body, offset) in _restOffsets)
+        {
+            if (!IsInstanceValid(body)) continue;
+            var rid = body.GetRid();
+            PhysicsServer3D.BodySetState(rid, PhysicsServer3D.BodyState.Transform,       spawnTransform * offset);
+            PhysicsServer3D.BodySetState(rid, PhysicsServer3D.BodyState.LinearVelocity,  Vector3.Zero);
+            PhysicsServer3D.BodySetState(rid, PhysicsServer3D.BodyState.AngularVelocity, Vector3.Zero);
+        }
+
+        // Camera — restore local transform (clears any accumulated rotation)
+        if (_cameraNode != null && IsInstanceValid(_cameraNode))
+            _cameraNode.Transform = _cameraRestTransform;
+
+        // Joint springs (restore if ragdolled), balance controller, foot steppers
+        StandUp();
+
+        // Clear stale input so the character doesn't drift after reset
+        _balanceController?.SetInputDir(Vector3.Zero);
+        _leftFootStepper?.SetInputDir(Vector3.Zero);
+        _rightFootStepper?.SetInputDir(Vector3.Zero);
+    }
+
+    private void UpdateInputDir()
+    {
+        var vec    = InputManager.GetVector(
+            nameof(GameAction.StrafeLeft), nameof(GameAction.StrafeRight),
+            nameof(GameAction.Forward),    nameof(GameAction.Backward));
+        var dir    = new Vector3(vec.X, 0f, -vec.Y); // forward = -Y in GetVector, +Z in world
+        var rotate = InputManager.GetAxis(nameof(GameAction.RotateLeft), nameof(GameAction.RotateRight));
+
+        PluginLogger.Log(LogLevel.Debug,
+            $"[RC] UpdateInputDir dir={dir} rotate={rotate} " +
+            $"balance={(_balanceController != null ? "ok" : "NULL")} " +
+            $"lStepper={(_leftFootStepper  != null ? "ok" : "NULL")} " +
+            $"rStepper={(_rightFootStepper  != null ? "ok" : "NULL")}");
+
+        _balanceController?.SetInputDir(dir, rotate);
+        _leftFootStepper?.SetInputDir(dir);
+        _rightFootStepper?.SetInputDir(dir);
+    }
+
     private void GetTorsoNodes()
-    { 
+    {
         var torsoNode = GetNode<Torso>("Torso");
         _uTorso = torsoNode.Top;
         _mTorso = torsoNode.Bodies[(torsoNode.SegmentCount - 1)/2];
@@ -319,5 +420,13 @@ public partial class RagdollCharacter : Node3D
         List<RigidBody3D> torso    = [..torsoNode.Bodies];
         _bodies[BodyGroup.Torso] = torso;
         _bodies[BodyGroup.All] = [.._bodies[BodyGroup.All], ..torso];
+
+        _balanceController?.Init(_lTorso);
+        _leftFootStepper?.Init(_lTorso, _mTorso, SpringStiffness, SpringDamping);
+        _rightFootStepper?.Init(_lTorso, _mTorso, SpringStiffness, SpringDamping);
+
+        var rootInv = GlobalTransform.AffineInverse();
+        foreach (var body in torsoNode.Bodies)
+            _restOffsets[body] = rootInv * body.GlobalTransform;
     }
 }

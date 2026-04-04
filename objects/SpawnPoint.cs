@@ -4,6 +4,7 @@ using Godot;
 using godototype.camera;
 using godototype.constants;
 using godototype.input;
+using godototype.world;
 using System;
 using System.IO;
 
@@ -99,8 +100,14 @@ public partial class SpawnPoint : Node3D
         if (lowestY < float.MaxValue)
             spawnedNode.GlobalPosition += new Vector3(0, GlobalPosition.Y - lowestY, 0);
         spawnedNode.GlobalPosition += SpawnOffset;
-        PluginLogger.Log(LogLevel.Debug, $"Spawned {scene}");        
-        
+        PluginLogger.Log(LogLevel.Debug, $"Spawned {scene}");
+
+        if (spawnedNode is IResettable resettable)
+        {
+            SpawnRegistry.Register(resettable, spawnedNode.GlobalTransform, spawnedNode.Name);
+            spawnedNode.TreeExiting += () => SpawnRegistry.Unregister(resettable);
+        }
+
         _spawnCounter++;
         if (SpawnCount > 0 && _spawnCounter >= SpawnCount)
             CallDeferred(MethodName.QueueFree);

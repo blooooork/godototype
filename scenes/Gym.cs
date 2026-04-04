@@ -1,6 +1,7 @@
 using Godot;
 using godotconsole;
 using godototype.objects;
+using godototype.world;
 using System;
 using System.Linq;
 
@@ -27,10 +28,26 @@ public partial class Gym : Node3D
             foreach (var point in targets)
                 point.TrySpawn(typeName);
         });
+
+        ConsoleManager.Register("reset", "reset [name] — reset all spawned objects, or a specific one by name", args =>
+        {
+            if (args.Length > 0)
+            {
+                var name = args[0];
+                if (SpawnRegistry.ResetByName(name))
+                    ConsoleManager.Print($"Reset '{name}'.");
+                else
+                    ConsoleManager.Print($"No spawned object named '{name}'.");
+                return;
+            }
+            SpawnRegistry.ResetAll();
+            ConsoleManager.Print($"Reset {SpawnRegistry.Count} spawned object(s).");
+        });
     }
 
     public override void _ExitTree()
     {
         ConsoleManager.Unregister("spawn");
+        ConsoleManager.Unregister("reset");
     }
 }
