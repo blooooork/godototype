@@ -92,7 +92,23 @@ public partial class RagdollCharacter : Node3D, IResettable
     // Body map
     private Dictionary<BodyGroup, List<RigidBody3D>> _bodies;
 
-    public override void _EnterTree()
+    public override void _ExitTree()
+    {
+        InputManager.Unsubscribe(nameof(GameAction.Jump),        onJustPressed: _onJump);
+        InputManager.Unsubscribe(nameof(GameAction.Crouch),      onJustPressed: _onCrouch,      onJustReleased: _onCrouchRelease);
+        InputManager.Unsubscribe(nameof(GameAction.Forward),     onJustPressed: _onForward,     onJustReleased: _onForward);
+        InputManager.Unsubscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward,    onJustReleased: _onBackward);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeLeft),  onJustPressed: _onStrafeLeft,  onJustReleased: _onStrafeLeft);
+        InputManager.Unsubscribe(nameof(GameAction.StrafeRight), onJustPressed: _onStrafeRight, onJustReleased: _onStrafeRight);
+        InputManager.Unsubscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft,  onJustReleased: _onRotateLeft);
+        InputManager.Unsubscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight, onJustReleased: _onRotateRight);
+        PoseManager.Unregister(_onCameraTick);
+        _camera.ClearFocus();
+        CameraManager.Instance.Release(_cameraClaim);
+        base._ExitTree();
+    }
+
+    public override void _Ready()
     {
         // Get camera
         _camera              = GetNode<IVirtualCamera>(new NodePath("Torso/Segment0/Camera"));
@@ -216,27 +232,6 @@ public partial class RagdollCharacter : Node3D, IResettable
         InputManager.Subscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft  = _ => UpdateInputDir(), onJustReleased: _onRotateLeft);
         InputManager.Subscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight = _ => UpdateInputDir(), onJustReleased: _onRotateRight);
 
-        base._EnterTree();
-    }
-
-    public override void _ExitTree()
-    {
-        InputManager.Unsubscribe(nameof(GameAction.Jump),        onJustPressed: _onJump);
-        InputManager.Unsubscribe(nameof(GameAction.Crouch),      onJustPressed: _onCrouch,      onJustReleased: _onCrouchRelease);
-        InputManager.Unsubscribe(nameof(GameAction.Forward),     onJustPressed: _onForward,     onJustReleased: _onForward);
-        InputManager.Unsubscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward,    onJustReleased: _onBackward);
-        InputManager.Unsubscribe(nameof(GameAction.StrafeLeft),  onJustPressed: _onStrafeLeft,  onJustReleased: _onStrafeLeft);
-        InputManager.Unsubscribe(nameof(GameAction.StrafeRight), onJustPressed: _onStrafeRight, onJustReleased: _onStrafeRight);
-        InputManager.Unsubscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft,  onJustReleased: _onRotateLeft);
-        InputManager.Unsubscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight, onJustReleased: _onRotateRight);
-        PoseManager.Unregister(_onCameraTick);
-        _camera.ClearFocus();
-        CameraManager.Instance.Release(_cameraClaim);
-        base._ExitTree();
-    }
-
-    public override void _Ready()
-    {
         var s = SpringStiffness;
         var d = SpringDamping;
 
@@ -396,17 +391,18 @@ public partial class RagdollCharacter : Node3D, IResettable
             nameof(GameAction.StrafeLeft), nameof(GameAction.StrafeRight),
             nameof(GameAction.Forward),    nameof(GameAction.Backward));
         var dir    = new Vector3(vec.X, 0f, -vec.Y); // forward = -Y in GetVector, +Z in world
-        var rotate = InputManager.GetAxis(nameof(GameAction.RotateLeft), nameof(GameAction.RotateRight));
-
-        PluginLogger.Log(LogLevel.Debug,
-            $"[RC] UpdateInputDir dir={dir} rotate={rotate} " +
-            $"balance={(_balanceController != null ? "ok" : "NULL")} " +
-            $"lStepper={(_leftFootStepper  != null ? "ok" : "NULL")} " +
-            $"rStepper={(_rightFootStepper  != null ? "ok" : "NULL")}");
-
-        _balanceController?.SetInputDir(dir, rotate);
-        _leftFootStepper?.SetInputDir(dir);
-        _rightFootStepper?.SetInputDir(dir);
+        PluginLogger.Log(LogLevel.Debug, $"Direction was determined to be {dir}");
+        // var rotate = InputManager.GetAxis(nameof(GameAction.RotateLeft), nameof(GameAction.RotateRight));
+        //
+        // PluginLogger.Log(LogLevel.Debug,
+        //     $"[RC] UpdateInputDir dir={dir} rotate={rotate} " +
+        //     $"balance={(_balanceController != null ? "ok" : "NULL")} " +
+        //     $"lStepper={(_leftFootStepper  != null ? "ok" : "NULL")} " +
+        //     $"rStepper={(_rightFootStepper  != null ? "ok" : "NULL")}");
+        //
+        // _balanceController?.SetInputDir(dir, rotate);
+        // _leftFootStepper?.SetInputDir(dir);
+        // _rightFootStepper?.SetInputDir(dir);
     }
 
     private void GetTorsoNodes()
