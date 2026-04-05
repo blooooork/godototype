@@ -581,7 +581,8 @@ public partial class RagdollCharacter : Node3D, IResettable
         foreach (var body in torso)
             body.AngularDamp = TorsoAngularDamp;
 
-        _balanceController?.Init(_lTorso, _uTorso);
+        // Properties must be set BEFORE Init — Init creates the balance joint
+        // using PitchRollStiffness/Damping, so they need the right values first.
         if (_balanceController != null)
         {
             _balanceController.PitchRollStiffness = UprightStiffness;
@@ -595,6 +596,7 @@ public partial class RagdollCharacter : Node3D, IResettable
             _balanceController.RotateTorque       = RotateTorque;
             _balanceController.RecoveryImpulse    = RecoveryImpulse;
         }
+        _balanceController?.Init(_lTorso, _uTorso);
         _balanceController?.SetBodies(_bodies[BodyGroup.All]);
 
         // Balance bodies: torso segments only. Including head/arms causes yaw instability —
