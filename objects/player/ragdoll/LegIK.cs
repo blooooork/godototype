@@ -20,6 +20,8 @@ public class LegIK
     // Label used in log output — set to "L" or "R" by caller.
     public string Label { get; set; } = "?";
 
+    private const bool LogEnabled = false;
+
     private readonly Generic6DofJoint3D _hipJoint;
     private readonly Generic6DofJoint3D _kneeJoint;
     private readonly Generic6DofJoint3D _ankleJoint;
@@ -96,7 +98,7 @@ public class LegIK
         var ankleCorr = Mathf.Clamp(flex * 0.6f, 0f, Mathf.DegToRad(30f));
 
         // ── Log every 30 ticks (~0.5 s at 60 hz physics) ─────────────────────
-        if (++_logTick % 30 == 0)
+        if (LogEnabled && ++_logTick % 30 == 0)
         {
             var clamped = !Mathf.IsEqualApprox(rawDist, dist);
             GD.Print($"[LegIK:{Label}] grounded={IsGrounded} | " +

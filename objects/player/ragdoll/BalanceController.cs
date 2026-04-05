@@ -10,19 +10,21 @@ public partial class BalanceController : Node, IBalanceable
 {
     public enum BalanceState { Standing, Stumbling, Fallen, GettingUp }
 
-    [Export] public float UprightTorqueStiffness { get; set; } = 12f;
-    [Export] public float UprightTorqueDamping   { get; set; } = 4f;
-    [Export] public float VelocityLeanFactor     { get; set; } = 0.08f;
-    [Export] public float MoveForce              { get; set; } = 5f;
-    [Export] public float StumbleAngleDeg        { get; set; } = 55f;
-    [Export] public float RecoveryImpulse        { get; set; } = 8f;
-    [Export] public float RotateTorque           { get; set; } = 3f;
+    public float PitchRollStiffness { get; set; } = 30f;
+    public float PitchRollDamping   { get; set; } = 10f;
+    public float YawDamping         { get; set; } = 20f;
+    public float VelocityLean       { get; set; } = 0.08f;
+    public float MoveForce          { get; set; } = 5f;
+    public float StumbleAngle       { get; set; } = 55f;
+    public float RecoveryImpulse    { get; set; } = 8f;
+    public float RotateTorque       { get; set; } = 3f;
 
     public BalanceState State { get; private set; } = BalanceState.Standing;
 
     private RigidBody3D              _lTorso;
     private RigidBody3D              _uTorso;
     private IReadOnlyList<RigidBody3D> _bodies;
+    private IReadOnlyList<RigidBody3D> _balanceBodies;
     private bool                     _enabled;
     private Vector3                  _inputDir;
     private float                    _rotateDir;
@@ -30,6 +32,16 @@ public partial class BalanceController : Node, IBalanceable
     // IK solvers — set by RagdollCharacter after construction
     private LegIK _leftLegIK;
     private LegIK _rightLegIK;
+
+
+    // Smoothed error — exponential moving average of the raw tilt axis.
+    // Prevents the controller reacting to frame-by-frame physics noise.
+    private Vector3 _smoothedError = Vector3.Zero;
+
+    public float ErrorSmoothing { get; set; } = 0.25f; // lerp alpha per tick: lower = smoother
+    public float TiltDeadzone   { get; set; } = 1.5f;  // degrees: no correction below this
+
+    private const bool LogEnabled = false;
 
     private int _logTick;
 
@@ -45,6 +57,12 @@ public partial class BalanceController : Node, IBalanceable
     /// Call after Init, from RagdollCharacter.GetTorsoNodes().
     /// </summary>
     public void SetBodies(IReadOnlyList<RigidBody3D> bodies) => _bodies = bodies;
+
+    /// <summary>
+    /// Bodies that receive upright torque each physics step: torso segments, head, upper arms.
+    /// Must be set separately from SetBodies — torque should not apply to distal limbs.
+    /// </summary>
+    public void SetBalanceBodies(IReadOnlyList<RigidBody3D> balanceBodies) => _balanceBodies = balanceBodies;
 
     /// <summary>
     /// Registers the IK solvers so BalanceController can tick them each physics step.
@@ -64,13 +82,53 @@ public partial class BalanceController : Node, IBalanceable
     {
         if (!_enabled || !IsValid()) return;
 
-        // ── Tick IK solvers ───────────────────────────────────────────────────
-        // These must run every physics step regardless of log cadence.
+        // ── Every physics step ────────────────────────────────────────────────
         _leftLegIK?.Solve();
         _rightLegIK?.Solve();
 
+        // Upright torque — stiffness distributed across all torso segments so each
+        // resists tipping independently. Damping applied only to _lTorso: applying
+        // per-body damping to multiple spring-connected bodies creates asymmetric
+        // internal joint forces that spin the whole character in yaw.
+        if (_balanceBodies != null && GodotObject.IsInstanceValid(_lTorso))
+        {
+            // Basis.X is world-up when standing (capsule rotated 90° in scene).
+            var currentUp = _lTorso.GlobalTransform.Basis.X;
+            var rawError  = currentUp.Cross(Vector3.Up);
+
+            // Low-pass filter: blend toward raw error each tick.
+            // Smooths out frame-by-frame physics noise so the controller reacts
+            // to the trend rather than instantaneous jitter.
+            _smoothedError = _smoothedError.Lerp(rawError, ErrorSmoothing);
+
+            // Deadzone: if tilt is negligible, apply no stiffness correction.
+            // Avoids micro-correcting at near-upright where error flips sign each frame.
+            var deadzoneRad = Mathf.Sin(Mathf.DegToRad(TiltDeadzone));
+            var errorAxis   = _smoothedError.Length() > deadzoneRad ? _smoothedError : Vector3.Zero;
+
+            foreach (var seg in _balanceBodies)
+            {
+                if (!GodotObject.IsInstanceValid(seg)) continue;
+
+                // Stiffness: pull upright
+                seg.ApplyTorque(PitchRollStiffness * errorAxis);
+
+                // Pitch/roll damping — strip yaw component so it doesn't create
+                // asymmetric cross-axis torque through the joints.
+                var pitchRollVel = seg.AngularVelocity
+                                 - seg.AngularVelocity.Dot(Vector3.Up) * Vector3.Up;
+                seg.ApplyTorque(-PitchRollDamping * pitchRollVel);
+
+                // Yaw damping on every body — joints transmit yaw between segments,
+                // so damping only _lTorso lets the others spin and pump yaw back in.
+                var yawVel = seg.AngularVelocity.Dot(Vector3.Up) * Vector3.Up;
+                seg.ApplyTorque(-YawDamping * yawVel);
+            }
+        }
+
+
         // ── Data gathering — log every 30 physics ticks (~0.5 s) ─────────────
-        if (++_logTick % 30 != 0) return;
+        if (!LogEnabled || ++_logTick % 30 != 0) return;
 
         // Torso orientation — local X is world-up when standing (capsule rotated 90° in scene)
         var torsoUp  = _lTorso.GlobalTransform.Basis.X;
@@ -117,8 +175,7 @@ public partial class BalanceController : Node, IBalanceable
                       :                          "AIRBORNE";
 
         // Tilt state classification (using exported threshold)
-        var stumbleRad = Mathf.DegToRad(StumbleAngleDeg);
-        var tiltState  = tiltDeg < StumbleAngleDeg ? "upright" : "stumbling";
+        var tiltState  = tiltDeg < StumbleAngle ? "upright" : "stumbling";
 
         PluginLogger.Log(LogLevel.Debug,
             $"[Balance] state={State} tilt={tiltDeg:F1}° spine={spineAngleDeg:F1}° ({tiltState}) | " +
@@ -127,7 +184,6 @@ public partial class BalanceController : Node, IBalanceable
             $"support={support} | input={_inputDir:F2} rotate={_rotateDir:F2} | " +
             $"totalMass={totalMass:F2}");
 
-        // TODO: implement upright torque — apply to _lTorso based on tilt + angVel
         // TODO: implement move force — apply horizontal force based on _inputDir
         // TODO: implement stumble/fall state transitions based on tiltDeg
     }

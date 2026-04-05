@@ -34,9 +34,21 @@ height = 0.5
 
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
-JumpForce = 30.0
-PassiveStiffness = 0.5
-TPoseStiffness = 20.0
+PassiveStiffness = 0.7
+SpineStiffness = 10.0
+IKStiffness = 15.0
+BodyDamping = 4.0
+ArmStiffness = 0.5
+ArmDamping = 0.25
+UprightStiffness = 50.0
+ErrorSmoothing = 1.0
+TiltDeadzone = 4.0
+RotateTorque = 5.0
+
+[node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
+
+[node name="CameraContainer" parent="Camera" index="0" unique_id=2406803]
+transform = Transform3D(1, 0, 0, 0, 0.9659255, 0.25881895, 0, -0.25881895, 0.9659255, 0, 3, 5)
 
 [node name="Head" parent="." unique_id=2063455393 node_paths=PackedStringArray("Anchor") instance=ExtResource("2_hmmqc")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.756, -0.012)
@@ -56,12 +68,6 @@ shape = SubResource("CapsuleShape3D_aaawk")
 
 [node name="Segment0Mesh" type="MeshInstance3D" parent="Torso/Segment0" unique_id=1774280116]
 mesh = SubResource("CapsuleMesh_ns8cp")
-
-[node name="Camera" parent="Torso/Segment0" unique_id=1586058199 instance=ExtResource("1_qndj1")]
-transform = Transform3D(0, 1, 0, -1, 0, 0, 0, 0, 1, -0.31800002, 0, 0.018)
-
-[node name="CameraContainer" parent="Torso/Segment0/Camera" index="0" unique_id=2406803]
-transform = Transform3D(1, 0, 0, 0, 0.96592563, 0.25881898, 0, -0.25881898, 0.96592563, 0, 3, 5)
 
 [node name="Segment1" type="RigidBody3D" parent="Torso" unique_id=1088368304]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
@@ -112,4 +118,4 @@ Anchor = NodePath("../Torso/Segment2")
 [node name="BalanceController" type="Node" parent="." unique_id=618791085]
 script = ExtResource("8_balctrl")
 
-[editable path="Torso/Segment0/Camera"]
+[editable path="Camera"]

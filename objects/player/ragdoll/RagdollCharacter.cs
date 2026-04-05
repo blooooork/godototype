@@ -22,39 +22,112 @@ public partial class RagdollCharacter : Node3D, IResettable
         LeftLeg, RightLeg, Legs,
     }
 
-    [Export] public float JumpForce      { get; set; } = 15f;
+    [Export] public float JumpForce { get; set; } = 15f;
 
-    // PassiveStiffness: tiny baseline stiffness on all non-IK joints.
-    // Keeps the body from flopping completely before BalanceController gets traction.
-    // 0 = fully loose. 1-3 = light resistance. Don't go high or it fights BalanceController.
-    [Export] public float PassiveStiffness { get; set; } = 0f;
+    // ── Joints ───────────────────────────────────────────────────────────────
+    // Controls how joints behave: how stiff they are, how quickly oscillation dies.
+    [ExportGroup("Joints")]
 
-    // IkStiffness: how strongly IK equilibrium writes are tracked.
-    // This is NOT a restore-to-T-pose spring — it's the gain on LegIK/BalanceController
-    // equilibrium targets. Keep this low; physics and balance torque do the heavy lifting.
-    [Export] public float IkStiffness    { get; set; } = 8f;
+    // Tiny baseline spring on all non-IK joints except spine and arms.
+    [Export] public float PassiveStiffness { get; set; } = 0.5f;
 
-    // JointDamping: kills oscillation on all joints without pulling toward any pose.
-    // Too low = joints wobble forever. Too high = sluggish, puppet-like.
-    // Kept intentionally low so damping doesn't cancel out spring corrective force.
-    [Export] public float JointDamping   { get; set; } = 1f;
+    // Stiffness on torso (spine) joints. Higher = spine stays straighter.
+    // PassiveStiffness=0.5 lets the spine bend 35°+ which causes centrifugal lean.
+    // Keep this much higher than PassiveStiffness — 5–10 is a good range.
+    [Export] public float SpineStiffness { get; set; } = 6f;
 
-    // TPoseStiffness: stiffness applied to all joints when Ctrl is held.
-    // High enough to visibly snap to T-pose against gravity; equilibrium stays at 0
-    // (spawn pose) so this is always a snap to the rest configuration.
-    [Export] public float TPoseStiffness { get; set; } = 120f;
+    // Body-level angular damping on the torso segments. Applied directly by the physics
+    // engine before constraint solving — more effective than ApplyTorque for killing
+    // spin impulses. Kills the spawn yaw impulse without fighting joint constraints.
+    [Export] public float TorsoAngularDamp { get; set; } = 8f;
+
+    // Body-level angular damping on arm bodies (UArm, LArm, Hand).
+    // The spinning torso drags arms via joint damping → arms oscillate.
+    // High body-level damp kills this without any spring involved.
+    [Export] public float ArmAngularDamp { get; set; } = 15f;
+
+    // Body-level angular damping on the skull.
+    [Export] public float HeadAngularDamp { get; set; } = 10f;
+
+    // Spring stiffness on IK-driven joints (legs). This is how well the leg follows
+    // the IK target — NOT a T-pose snap. Keep moderate; physics still overrides hard impacts.
+    [Export] public float IKStiffness { get; set; } = 10f;
+
+    // Oscillation damping on torso/hip/shoulder joints.
+    [Export] public float BodyDamping { get; set; } = 1f;
+
+    // Stiffness on arm joints (shoulders, elbows, wrists).
+    // Keep at 0 to prevent spring oscillation propagating down the arm chain.
+    // Raise only if you need arms to hold a pose — any value > 0 risks hand shake.
+    [Export] public float ArmStiffness { get; set; } = 0f;
+
+    // Damping on arm joints. Resists motion without pulling toward any pose.
+    [Export] public float ArmDamping { get; set; } = 3f;
+
+    // Damping on wrists and ankles only.
+    [Export] public float HandFootDamping { get; set; } = 1f;
+
+    // How strongly the skull holds itself upright. Applied as a direct balance torque
+    // on the skull body — same mechanism as the torso upright spring, just for the head.
+    // 0 = head flops freely. Raise until it sits upright without snapping.
+    [Export] public float HeadStiffness { get; set; } = 8f;
+
+    // Damping on the skull's upright torque. Kills head bobbing/oscillation.
+    [Export] public float HeadDamping { get; set; } = 5f;
+
+    // Stiffness applied when Ctrl is held (T-pose snap). All joints spring toward
+    // their rest pose. Balance and IK are suspended while this is active.
+    [Export] public float SnapStiffness { get; set; } = 20f;
+
+    // ── Balance ───────────────────────────────────────────────────────────────
+    // Controls the active balancing system that keeps the character upright.
+    [ExportGroup("Balance")]
+
+    // How strongly the body is pulled upright (PD spring stiffness).
+    // Too low = tips over. Too high = jerky snap-back oscillation.
+    [Export] public float UprightStiffness { get; set; } = 30f;
+
+    // How quickly upright oscillation is damped out (PD spring damping).
+    // Raise if the body rocks back and forth after a correction.
+    [Export] public float UprightDamping { get; set; } = 10f;
+
+    // Resists spinning in place (yaw). Applied to all torso segments.
+    [Export] public float YawDamping { get; set; } = 20f;
+
+    // How much of the raw tilt error carries over each physics tick (0–1).
+    // Lower = heavier smoothing, slower reaction. Higher = more responsive but more jitter.
+    // At 60hz physics: 0.1 ≈ smoothed over ~10 frames, 0.5 ≈ ~2 frames.
+    [Export] public float ErrorSmoothing { get; set; } = 0.25f;
+
+    // Tilt angle (degrees) within which no correction force is applied.
+    // Prevents micro-oscillation near-upright where the error flips sign every frame.
+    [Export] public float TiltDeadzone { get; set; } = 1.5f;
+
+    // Tilt angle (degrees) at which the character transitions upright → stumbling.
+    [Export] public float StumbleAngle { get; set; } = 55f;
+
+    // Horizontal force applied in the input direction while moving.
+    [Export] public float MoveForce { get; set; } = 5f;
+
+    // How much the body leans forward proportional to its horizontal speed.
+    // Mimics natural gait lean — keep very small.
+    [Export] public float VelocityLean { get; set; } = 0.005f;
+
+    // Yaw torque applied when the player rotates.
+    [Export] public float RotateTorque { get; set; } = 3f;
+
+    // Upward impulse applied when recovering from a fallen state.
+    [Export] public float RecoveryImpulse { get; set; } = 8f;
 
     private Dictionary<RigidBody3D, Transform3D> _restTransforms;
     private Dictionary<RigidBody3D, Transform3D> _restOffsets;
 
     private IVirtualCamera    _camera;
     private Node3D            _cameraNode;
-    private Transform3D       _cameraRestTransform;
     private CameraClaim       _cameraClaim;
     private BalanceController _balanceController;
     private LegIK             _leftLegIK;
     private LegIK             _rightLegIK;
-    private Action<double>    _onCameraTick;
 
     // Whether BalanceController + IK are actively running.
     // False = full ragdoll — physics only, no active systems.
@@ -77,11 +150,13 @@ public partial class RagdollCharacter : Node3D, IResettable
     private Generic6DofJoint3D   _rightHip;
     private Generic6DofJoint3D   _rightKnee;
     private Generic6DofJoint3D   _rightAnkle;
-    // Left leg joints — owned by LegIK, excluded from ragdoll toggle
+    // Leg joints — both legs IK-owned, excluded from ragdoll toggle
     private Generic6DofJoint3D   _leftHip;
     private Generic6DofJoint3D   _leftKnee;
     private Generic6DofJoint3D   _leftAnkle;
     private Generic6DofJoint3D[] _leftLegJoints;
+    private Generic6DofJoint3D[] _rightLegJoints;
+    private Generic6DofJoint3D[] _torsoJoints;
 
     // All joints that participate in ragdoll toggle (left leg excluded)
     private Generic6DofJoint3D[] _joints;
@@ -132,7 +207,6 @@ public partial class RagdollCharacter : Node3D, IResettable
         InputManager.Unsubscribe(nameof(GameAction.StrafeRight), onJustPressed: _onStrafeRight, onJustReleased: _onStrafeRight);
         InputManager.Unsubscribe(nameof(GameAction.RotateLeft),  onJustPressed: _onRotateLeft,  onJustReleased: _onRotateLeft);
         InputManager.Unsubscribe(nameof(GameAction.RotateRight), onJustPressed: _onRotateRight, onJustReleased: _onRotateRight);
-        PoseManager.Unregister(_onCameraTick);
         _camera.ClearFocus();
         CameraManager.Instance.Release(_cameraClaim);
         base._ExitTree();
@@ -140,18 +214,10 @@ public partial class RagdollCharacter : Node3D, IResettable
 
     public override void _Ready()
     {
-        // Camera
-        _camera              = GetNode<IVirtualCamera>(new NodePath("Torso/Segment0/Camera"));
-        _cameraNode          = GetNode<Node3D>("Torso/Segment0/Camera");
-        _cameraRestTransform = _cameraNode.Transform;
-        _cameraClaim         = CameraManager.Instance.Request(_camera, priority: 20);
-
-        PoseManager.Register(_onCameraTick = _ =>
-        {
-            if (_cameraNode == null || !IsInstanceValid(_cameraNode)) return;
-            var g = _cameraNode.GlobalRotation;
-            _cameraNode.GlobalRotation = new Vector3(0f, g.Y, 0f);
-        });
+        // Camera — free-floating at root, tracks _uTorso via VirtualCamera.SetFocus (see GetTorsoNodes)
+        _camera      = GetNode<IVirtualCamera>("Camera");
+        _cameraNode  = GetNode<Node3D>("Camera");
+        _cameraClaim = CameraManager.Instance.Request(_camera, priority: 20);
 
         _balanceController = GetNodeOrNull<BalanceController>("BalanceController");
 
@@ -172,8 +238,10 @@ public partial class RagdollCharacter : Node3D, IResettable
         _rightKnee     = GetNode<Generic6DofJoint3D>("RightLeg/Knee/KneeJoint");
         _rightAnkle    = GetNode<Generic6DofJoint3D>("RightLeg/Ankle/AnkleJoint");
 
-        // Left leg joints are IK-owned — excluded from the ragdoll toggle array
-        _leftLegJoints = [ _leftHip, _leftKnee, _leftAnkle ];
+        // Both leg joint sets are IK-owned — excluded from the ragdoll toggle array.
+        // Asymmetric stiffness (one leg IK, one passive) creates differential hip torque → yaw spin.
+        _leftLegJoints  = [ _leftHip,  _leftKnee,  _leftAnkle  ];
+        _rightLegJoints = [ _rightHip, _rightKnee, _rightAnkle ];
 
         // Everything else participates in the ragdoll toggle
         _joints =
@@ -181,7 +249,6 @@ public partial class RagdollCharacter : Node3D, IResettable
             _neckJoint,
             _leftShoulder,  _leftElbow,  _leftWrist,
             _rightShoulder, _rightElbow, _rightWrist,
-            _rightHip, _rightKnee, _rightAnkle,
         ];
 
         // Get joint bodies
@@ -266,13 +333,18 @@ public partial class RagdollCharacter : Node3D, IResettable
         //   - Springs ALWAYS enabled (so damping is always active)
         //   - Stiffness ZERO (no T-pose pull, no equilibrium opinion)
         //   - Damping only (kills oscillation, body hangs naturally under gravity)
-        //   - Left leg joints use IkStiffness so LegIK writes actually register
+        //   - Left leg joints use IKStiffness so LegIK writes actually register
         //
         // Cfg(joint, stiffness, damping, xLow, xHigh, yLow, yHigh, zLow, zHigh)
         // Equal lo/hi = locked axis (damping still applied, stiffness zeroed).
-        var d  = JointDamping;
+        var d  = BodyDamping;
+        var ed = HandFootDamping;
+        var hs = HeadStiffness;
+        var hd = HeadDamping;
         var ps = PassiveStiffness;
-        var ik = IkStiffness;
+        var ik = IKStiffness;
+        var ar = ArmStiffness;
+        var ad = ArmDamping;
 
         static void Cfg(Generic6DofJoint3D j, float s, float d,
             float xL, float xH, float yL, float yH, float zL, float zH)
@@ -323,28 +395,32 @@ public partial class RagdollCharacter : Node3D, IResettable
 
         // Passive joints — stiffness 0, damping only. Physics + BalanceController torque
         // determines pose. These will flop naturally under gravity.
-        Cfg(_neckJoint,     ps, d,  -30f,  30f,  -45f,  45f,  -30f,  30f);
+        Cfg(_neckJoint,     hs, hd, -30f,  30f,  -45f,  45f,  -30f,  30f);
 
         var torsoNode = GetNode<Torso>("Torso");
         foreach (var tj in torsoNode.Joints ?? [])
-            Cfg(tj,         ps, d,  -40f,  20f,  -20f,  20f,  -15f,  15f);
+            Cfg(tj, SpineStiffness, d, -40f, 20f, -20f, 20f, -15f, 15f);
 
-        Cfg(_leftShoulder,  ps, d,  -90f,  90f,  -45f,  45f,  -90f,  90f);
-        Cfg(_rightShoulder, ps, d,  -90f,  90f,  -45f,  45f,  -90f,  90f);
-        Cfg(_leftElbow,     ps, d, -135f,   5f,    0f,   0f,    0f,   0f);
-        Cfg(_rightElbow,    ps, d, -135f,   5f,    0f,   0f,    0f,   0f);
-        Cfg(_leftWrist,     ps, d,  -30f,  30f,    0f,   0f,    0f,   0f);
-        Cfg(_rightWrist,    ps, d,  -30f,  30f,    0f,   0f,    0f,   0f);
-        Cfg(_rightHip,      ps, d,  -90f,  90f,  -30f,  30f,  -45f,  45f);
-        Cfg(_rightKnee,     ps, d, -130f,   5f,    0f,   0f,    0f,   0f);
-        Cfg(_rightAnkle,    ps, d,  -30f,  30f,    0f,   0f,  -15f,  15f);
-
-        // IK-driven joints — low stiffness so LegIK equilibrium writes land,
-        // but still loose enough that physics can override on hard impacts.
+        Cfg(_leftShoulder,  ar, ad,  -90f,  90f,  -45f,  45f,  -90f,  90f);
+        Cfg(_rightShoulder, ar, ad,  -90f,  90f,  -45f,  45f,  -90f,  90f);
+        Cfg(_leftElbow,     ar, ad, -135f,   5f,    0f,   0f,    0f,   0f);
+        Cfg(_rightElbow,    ar, ad, -135f,   5f,    0f,   0f,    0f,   0f);
+        Cfg(_leftWrist,     ar, ed,  -30f,  30f,    0f,   0f,    0f,   0f);
+        Cfg(_rightWrist,    ar, ed,  -30f,  30f,    0f,   0f,    0f,   0f);
+        // Both legs IK-driven — same stiffness to keep hip forces symmetric and avoid yaw spin.
         // LegIK will overwrite AngularSpringEquilibriumPoint each physics tick.
-        Cfg(_leftHip,   ik, d,  -90f,  90f,  -30f, 30f,  -45f,  45f);
-        Cfg(_leftKnee,  ik, d, -130f,   5f,    0f,  0f,    0f,   0f);
-        Cfg(_leftAnkle, ik, d,  -30f,  30f,    0f,  0f,  -15f,  15f);
+        Cfg(_leftHip,   ik, d,   -90f,  90f,  -30f, 30f,  -45f,  45f);
+        Cfg(_leftKnee,  ik, d,  -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_leftAnkle, ik, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
+        Cfg(_rightHip,  ik, d,   -90f,  90f,  -30f, 30f,  -45f,  45f);
+        Cfg(_rightKnee, ik, d,  -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_rightAnkle,ik, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
+
+        // Body-level angular damp — applied by physics engine before constraint solving,
+        // so more effective than ApplyTorque for killing unwanted spin.
+        foreach (var body in _bodies[BodyGroup.Arms])
+            body.AngularDamp = ArmAngularDamp;
+        _head.AngularDamp = HeadAngularDamp;
 
         // Capture root-relative spawn offsets for reset
         var rootInv = GlobalTransform.AffineInverse();
@@ -369,8 +445,8 @@ public partial class RagdollCharacter : Node3D, IResettable
     {
         _isActive = !snapToTPose;
 
-        var targetStiffness = snapToTPose ? TPoseStiffness : PassiveStiffness;
-        var d               = JointDamping;
+        var targetStiffness = snapToTPose ? SnapStiffness : PassiveStiffness;
+        var d               = BodyDamping;
 
         // Apply to all ragdoll-managed joints (excludes left leg — IK owns those)
         foreach (var j in _joints)
@@ -387,20 +463,60 @@ public partial class RagdollCharacter : Node3D, IResettable
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
         }
 
-        // Left leg joints restore to IkStiffness (not TPoseStiffness) on release
+        // Torso (spine) joints restore to SpineStiffness on release, not PassiveStiffness.
+        var spineStiffness = snapToTPose ? SnapStiffness : SpineStiffness;
+        foreach (var j in _torsoJoints ?? [])
+        {
+            if (!IsInstanceValid(j)) continue;
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiffness);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiffness);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiffness);
+        }
+
+        // Arm joints restore to ArmStiffness (0 by default) on release — zero stiffness
+        // means pure damping, no spring to oscillate and shake the hands.
+        var armStiffness = snapToTPose ? SnapStiffness : ArmStiffness;
+        var armDamping   = snapToTPose ? d : ArmDamping;
+        foreach (var j in new[] { _leftShoulder, _leftElbow, _leftWrist,
+                                   _rightShoulder, _rightElbow, _rightWrist })
+        {
+            if (!IsInstanceValid(j)) continue;
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, armStiffness);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   armDamping);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, armStiffness);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   armDamping);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, armStiffness);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   armDamping);
+        }
+
+        // Neck joint restores to HeadStiffness on release so the head holds itself up.
+        var neckStiffness = snapToTPose ? SnapStiffness : HeadStiffness;
+        var neckDamping   = snapToTPose ? d : HeadDamping;
+        if (IsInstanceValid(_neckJoint))
+        {
+            _neckJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiffness);
+            _neckJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   neckDamping);
+            _neckJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiffness);
+            _neckJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   neckDamping);
+            _neckJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiffness);
+            _neckJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   neckDamping);
+        }
+
+        // Leg joints restore to IKStiffness (not SnapStiffness) on release
         // so LegIK can immediately take back control without a stiffness mismatch.
-        var leftLegStiffness = snapToTPose ? TPoseStiffness : IkStiffness;
-        foreach (var j in _leftLegJoints)
+        var legStiffness = snapToTPose ? SnapStiffness : IKStiffness;
+        foreach (var legJoints in new[] { _leftLegJoints, _rightLegJoints })
+        foreach (var j in legJoints)
         {
             if (!IsInstanceValid(j)) continue;
             j.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
             j.SetParamY(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
-            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, leftLegStiffness);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
             j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
-            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, leftLegStiffness);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
             j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
-            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, leftLegStiffness);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
         }
 
@@ -428,9 +544,8 @@ public partial class RagdollCharacter : Node3D, IResettable
             PhysicsServer3D.BodySetState(rid, PhysicsServer3D.BodyState.AngularVelocity, Vector3.Zero);
         }
 
-        // Camera — restore local transform
-        if (_cameraNode != null && IsInstanceValid(_cameraNode))
-            _cameraNode.Transform = _cameraRestTransform;
+        // Camera — snap immediately so it doesn't lerp from the old spawn position
+        (_camera as VirtualCamera)?.Snap();
 
         // Re-enable active systems and clear stale input
         SetTPose(false);
@@ -454,14 +569,38 @@ public partial class RagdollCharacter : Node3D, IResettable
         _lTorso = torsoNode.Bottom;
 
         var torsoJoints = torsoNode.Joints ?? [];
+        _torsoJoints = torsoJoints;
         _joints = [.._joints, ..torsoJoints];
 
         List<RigidBody3D> torso  = [..torsoNode.Bodies];
         _bodies[BodyGroup.Torso] = torso;
         _bodies[BodyGroup.All]   = [.._bodies[BodyGroup.All], ..torso];
 
+        // Body-level angular damp on torso segments kills the spawn yaw impulse.
+        // ApplyTorque fights the constraint solver; angular_damp runs before it.
+        foreach (var body in torso)
+            body.AngularDamp = TorsoAngularDamp;
+
         _balanceController?.Init(_lTorso, _uTorso);
+        if (_balanceController != null)
+        {
+            _balanceController.PitchRollStiffness = UprightStiffness;
+            _balanceController.PitchRollDamping   = UprightDamping;
+            _balanceController.YawDamping         = YawDamping;
+            _balanceController.ErrorSmoothing     = ErrorSmoothing;
+            _balanceController.TiltDeadzone       = TiltDeadzone;
+            _balanceController.StumbleAngle       = StumbleAngle;
+            _balanceController.MoveForce          = MoveForce;
+            _balanceController.VelocityLean       = VelocityLean;
+            _balanceController.RotateTorque       = RotateTorque;
+            _balanceController.RecoveryImpulse    = RecoveryImpulse;
+        }
         _balanceController?.SetBodies(_bodies[BodyGroup.All]);
+
+        // Balance bodies: torso segments only. Including head/arms causes yaw instability —
+        // damping their asymmetric limb angular velocities injects torque through the joints
+        // into the torso. Arms and head are stabilised by BodyDamping instead.
+        _balanceController?.SetBalanceBodies(torso);
 
         // Construct LegIK solvers now that all nodes are valid.
         // FootTarget markers must exist in the scene at:
@@ -485,6 +624,11 @@ public partial class RagdollCharacter : Node3D, IResettable
         _rightLegIK.Init();
 
         _balanceController?.SetLegIK(_leftLegIK, _rightLegIK);
+
+        // Now that _uTorso is resolved, point the camera at it.
+        // VirtualCamera._Process will lerp toward _uTorso.GlobalPosition each render frame.
+        _camera.SetFocus(_uTorso);
+        (_camera as VirtualCamera)?.Snap();   // teleport immediately so first frame is correct
 
         var rootInv = GlobalTransform.AffineInverse();
         foreach (var body in torsoNode.Bodies)
