@@ -78,7 +78,18 @@ public class LegIK
 
         if (FootTarget == null) return;
 
-        var hipPos   = _hipJoint.GlobalPosition;
+        var hipPos = _hipJoint.GlobalPosition;
+
+        // Keep the foot target directly below the hip at full leg extension.
+        // This ensures the IK always targets a straight leg regardless of how much
+        // the hip has dropped — the hip-to-target distance stays at total leg length,
+        // so flex ≈ 0 and the spring pushes the foot into the floor to support the body.
+        FootTarget.GlobalPosition = new Vector3(
+            hipPos.X,
+            hipPos.Y - (_upperLen + _lowerLen - 0.001f),
+            hipPos.Z
+        );
+
         var toTarget = FootTarget.GlobalPosition - hipPos;
         var rawDist  = toTarget.Length();
         var dist     = Mathf.Clamp(rawDist, 0.001f, _upperLen + _lowerLen - 0.001f);

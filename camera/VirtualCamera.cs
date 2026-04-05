@@ -26,9 +26,6 @@ public partial class VirtualCamera : Node3D, IVirtualCamera
     // Typical range 5–15. 0 = instant snap (no smoothing).
     [Export] public float PositionSmoothing { get; set; } = 10f;
 
-    // How quickly the camera yaw catches up to the target facing direction.
-    [Export] public float YawSmoothing { get; set; } = 6f;
-
     private Camera3D _camera;
     private Node3D   _focus;
     private float    _yaw;
@@ -43,23 +40,16 @@ public partial class VirtualCamera : Node3D, IVirtualCamera
     {
         if (_focus == null || !GodotObject.IsInstanceValid(_focus)) return;
 
-        var fwd       = _focus.GlobalTransform.Basis.Z;
-        var targetYaw = Mathf.Atan2(fwd.X, fwd.Z);
+        // Position follows the focus. Yaw is player-driven (SetYaw) and held fixed here —
+        // no auto-rotation toward the character's facing direction.
+        var pos = PositionSmoothing <= 0f
+            ? _focus.GlobalPosition
+            : GlobalPosition.Lerp(_focus.GlobalPosition, Mathf.Clamp(PositionSmoothing * (float)delta, 0f, 1f));
 
-        if (PositionSmoothing <= 0f)
-        {
-            // Instant — no smoothing
-            _yaw = targetYaw;
-            SetRig(_focus.GlobalPosition, _yaw);
-        }
-        else
-        {
-            var posWeight = Mathf.Clamp(PositionSmoothing * (float)delta, 0f, 1f);
-            var yawWeight = Mathf.Clamp(YawSmoothing      * (float)delta, 0f, 1f);
-            _yaw = Mathf.LerpAngle(_yaw, targetYaw, yawWeight);
-            SetRig(GlobalPosition.Lerp(_focus.GlobalPosition, posWeight), _yaw);
-        }
+        SetRig(pos, _yaw);
     }
+
+    public void SetYaw(float yaw) => _yaw = yaw;
 
     /// <summary>
     /// Immediately teleport to the focus target — use after a scene reset
@@ -68,8 +58,6 @@ public partial class VirtualCamera : Node3D, IVirtualCamera
     public void Snap()
     {
         if (_focus == null || !GodotObject.IsInstanceValid(_focus)) return;
-        var fwd = _focus.GlobalTransform.Basis.Z;
-        _yaw = Mathf.Atan2(fwd.X, fwd.Z);
         SetRig(_focus.GlobalPosition, _yaw);
     }
 

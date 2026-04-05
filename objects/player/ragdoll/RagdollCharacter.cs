@@ -49,9 +49,11 @@ public partial class RagdollCharacter : Node3D, IResettable
     // Body-level angular damping on the skull.
     [Export] public float HeadAngularDamp { get; set; } = 10f;
 
-    // Spring stiffness on IK-driven joints (legs). This is how well the leg follows
-    // the IK target — NOT a T-pose snap. Keep moderate; physics still overrides hard impacts.
-    [Export] public float IKStiffness { get; set; } = 10f;
+    // Spring stiffness on leg joints (hip, knee, ankle). How well the leg follows the IK target.
+    [Export] public float LegStiffness { get; set; } = 10f;
+
+    // Oscillation damping on leg joints.
+    [Export] public float LegDamping { get; set; } = 1f;
 
     // Oscillation damping on torso/hip/shoulder joints.
     [Export] public float BodyDamping { get; set; } = 1f;
@@ -342,7 +344,8 @@ public partial class RagdollCharacter : Node3D, IResettable
         var hs = HeadStiffness;
         var hd = HeadDamping;
         var ps = PassiveStiffness;
-        var ik = IKStiffness;
+        var ik = LegStiffness;
+        var ld = LegDamping;
         var ar = ArmStiffness;
         var ad = ArmDamping;
 
@@ -409,11 +412,11 @@ public partial class RagdollCharacter : Node3D, IResettable
         Cfg(_rightWrist,    ar, ed,  -30f,  30f,    0f,   0f,    0f,   0f);
         // Both legs IK-driven — same stiffness to keep hip forces symmetric and avoid yaw spin.
         // LegIK will overwrite AngularSpringEquilibriumPoint each physics tick.
-        Cfg(_leftHip,   ik, d,   -90f,  90f,  -30f, 30f,  -45f,  45f);
-        Cfg(_leftKnee,  ik, d,  -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_leftHip,   ik, ld,  -90f,  90f,  -30f, 30f,  -45f,  45f);
+        Cfg(_leftKnee,  ik, ld, -130f,   5f,    0f,  0f,    0f,   0f);
         Cfg(_leftAnkle, ik, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
-        Cfg(_rightHip,  ik, d,   -90f,  90f,  -30f, 30f,  -45f,  45f);
-        Cfg(_rightKnee, ik, d,  -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_rightHip,  ik, ld,  -90f,  90f,  -30f, 30f,  -45f,  45f);
+        Cfg(_rightKnee, ik, ld, -130f,   5f,    0f,  0f,    0f,   0f);
         Cfg(_rightAnkle,ik, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
 
         // Body-level angular damp — applied by physics engine before constraint solving,
@@ -502,9 +505,10 @@ public partial class RagdollCharacter : Node3D, IResettable
             _neckJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   neckDamping);
         }
 
-        // Leg joints restore to IKStiffness (not SnapStiffness) on release
+        // Leg joints restore to LegStiffness (not SnapStiffness) on release
         // so LegIK can immediately take back control without a stiffness mismatch.
-        var legStiffness = snapToTPose ? SnapStiffness : IKStiffness;
+        var legStiffness = snapToTPose ? SnapStiffness : LegStiffness;
+        var legDamping   = snapToTPose ? d : LegDamping;
         foreach (var legJoints in new[] { _leftLegJoints, _rightLegJoints })
         foreach (var j in legJoints)
         {
@@ -513,11 +517,11 @@ public partial class RagdollCharacter : Node3D, IResettable
             j.SetParamY(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
             j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
-            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,   legDamping);
             j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
-            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringDamping,   legDamping);
             j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, legStiffness);
-            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   d);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringDamping,   legDamping);
         }
 
         if (snapToTPose)

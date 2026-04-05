@@ -36,7 +36,6 @@ height = 0.5
 script = ExtResource("1_6awg3")
 PassiveStiffness = 0.7
 SpineStiffness = 10.0
-IKStiffness = 15.0
 BodyDamping = 4.0
 ArmStiffness = 0.5
 ArmDamping = 0.25
