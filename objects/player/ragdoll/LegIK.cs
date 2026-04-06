@@ -20,6 +20,21 @@ public class LegIK
     // Label used in log output — set to "L" or "R" by caller.
     public string Label { get; set; } = "?";
 
+    // Horizontal distance from directly-below-hip at which a step is triggered.
+    public float StepThreshold { get; set; } = 0.2f;
+
+    // How many physics ticks the swing phase lasts (foot lerps toward new position).
+    public int StepSwingTicks { get; set; } = 15;
+
+    // How many physics ticks to wait after planting before this leg can step again.
+    public int StepCooldownTicks { get; set; } = 10;
+
+    // Set false by BalanceController while the other leg is mid-swing.
+    public bool CanStep { get; set; } = true;
+
+    // True while this leg is in the swing / lerp phase.
+    public bool IsStepping { get; private set; }
+
     private const bool LogEnabled = false;
 
     private readonly Generic6DofJoint3D _hipJoint;
@@ -27,12 +42,15 @@ public class LegIK
     private readonly Generic6DofJoint3D _ankleJoint;
     private readonly RayCast3D          _groundRay;
 
-    private float _upperLen;
-    private float _lowerLen;
-    private Basis _restHipBasis;
-    private bool  _initialised;
-    private bool  _active = true;
-    private int   _logTick;
+    private float   _upperLen;
+    private float   _lowerLen;
+    private Basis   _restHipBasis;
+    private bool    _initialised;
+    private bool    _active = true;
+    private int     _logTick;
+    private int     _swingTick;
+    private int     _cooldownTick;
+    private Vector3 _stepTarget;
 
     public LegIK(
         Generic6DofJoint3D hipJoint,
@@ -80,15 +98,42 @@ public class LegIK
 
         var hipPos = _hipJoint.GlobalPosition;
 
-        // Keep the foot target directly below the hip at full leg extension.
-        // This ensures the IK always targets a straight leg regardless of how much
-        // the hip has dropped — the hip-to-target distance stays at total leg length,
-        // so flex ≈ 0 and the spring pushes the foot into the floor to support the body.
-        FootTarget.GlobalPosition = new Vector3(
-            hipPos.X,
-            hipPos.Y - (_upperLen + _lowerLen - 0.001f),
-            hipPos.Z
-        );
+        // Track Y only — prevents hip-sag knee bend while keeping X/Z planted.
+        var planted = FootTarget.GlobalPosition;
+        planted.Y = hipPos.Y - (_upperLen + _lowerLen - 0.001f);
+
+        if (IsStepping)
+        {
+            // Swing phase: lerp foot toward the step target over SwingTicks frames.
+            // Lerp distributes the spring force over time instead of a violent snap.
+            float t = 1f - (float)_swingTick / StepSwingTicks;   // 0→1 over swing duration
+            planted.X = Mathf.Lerp(FootTarget.GlobalPosition.X, _stepTarget.X, t);
+            planted.Z = Mathf.Lerp(FootTarget.GlobalPosition.Z, _stepTarget.Z, t);
+            _swingTick--;
+            if (_swingTick <= 0)
+            {
+                planted.X    = _stepTarget.X;
+                planted.Z    = _stepTarget.Z;
+                IsStepping   = false;
+                _cooldownTick = StepCooldownTicks;
+            }
+        }
+        else if (_cooldownTick > 0)
+        {
+            _cooldownTick--;
+        }
+        else if (CanStep)
+        {
+            var drift = new Vector2(planted.X - hipPos.X, planted.Z - hipPos.Z).Length();
+            if (drift > StepThreshold)
+            {
+                _stepTarget = new Vector3(hipPos.X, planted.Y, hipPos.Z);
+                IsStepping  = true;
+                _swingTick  = StepSwingTicks;
+            }
+        }
+
+        FootTarget.GlobalPosition = planted;
 
         var toTarget = FootTarget.GlobalPosition - hipPos;
         var rawDist  = toTarget.Length();

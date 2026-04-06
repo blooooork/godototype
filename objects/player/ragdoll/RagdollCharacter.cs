@@ -111,12 +111,17 @@ public partial class RagdollCharacter : Node3D, IResettable
     // Horizontal force applied in the input direction while moving.
     [Export] public float MoveForce { get; set; } = 5f;
 
-    // How much the body leans forward proportional to its horizontal speed.
-    // Mimics natural gait lean — keep very small.
-    [Export] public float VelocityLean { get; set; } = 0.005f;
+    // How far the body leans in the input direction (radians of lean per unit of input, 0–1).
+    // The balance spring fights the lean, tipping the CoM and causing the character to stumble
+    // toward the target. Try 0.2–0.5 for visible locomotion; beyond ~0.6 it falls over freely.
+    [Export] public float VelocityLean { get; set; } = 0.3f;
 
     // Yaw torque applied when the player rotates.
     [Export] public float RotateTorque { get; set; } = 3f;
+
+    // How far (metres) a foot can drift horizontally from under the hip before a step is taken.
+    // Smaller = more frequent steps, snappier gait. Larger = longer strides, more stumble.
+    [Export] public float StepThreshold { get; set; } = 0.25f;
 
     // Upward impulse applied when recovering from a fallen state.
     [Export] public float RecoveryImpulse { get; set; } = 8f;
@@ -561,8 +566,9 @@ public partial class RagdollCharacter : Node3D, IResettable
         var vec = InputManager.GetVector(
             nameof(GameAction.StrafeLeft), nameof(GameAction.StrafeRight),
             nameof(GameAction.Forward),    nameof(GameAction.Backward));
-        var dir = new Vector3(vec.X, 0f, -vec.Y);
+        var dir = new Vector3(-vec.Y, 0f, vec.X);
         PluginLogger.Log(LogLevel.Debug, $"Direction was determined to be {dir}");
+        _balanceController?.SetInputDir(dir);
     }
 
     private void GetTorsoNodes()
@@ -621,12 +627,12 @@ public partial class RagdollCharacter : Node3D, IResettable
 
         _leftLegIK = new LegIK(
             _leftHip, _leftKnee, _leftAnkle,
-            _lFoot, lFootTarget) { Label = "L" };
+            _lFoot, lFootTarget) { Label = "L", StepThreshold = StepThreshold };
         _leftLegIK.Init();
 
         _rightLegIK = new LegIK(
             _rightHip, _rightKnee, _rightAnkle,
-            _rFoot, rFootTarget) { Label = "R" };
+            _rFoot, rFootTarget) { Label = "R", StepThreshold = StepThreshold };
         _rightLegIK.Init();
 
         _balanceController?.SetLegIK(_leftLegIK, _rightLegIK);

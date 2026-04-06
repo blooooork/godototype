@@ -40,13 +40,14 @@ public partial class BalanceController : Node, IBalanceable
     // instability. Joint X = world-up axis in anchor frame = yaw → left free.
     private RigidBody3D        _anchor;
     private Generic6DofJoint3D _balanceJoint;
+    private Basis              _anchorRestBasis; // anchor orientation when perfectly upright
 
     // Smoothed tilt error — kept for state machine use (stumble/fall detection), not for torque.
     private Vector3 _smoothedError = Vector3.Zero;
     public float ErrorSmoothing { get; set; } = 0.25f;
     public float TiltDeadzone   { get; set; } = 1.5f;
 
-    private const bool  LogEnabled        = false;
+    private const bool  LogEnabled        = true;
     private const float JitterLogThreshold = 15f;
 
     private Dictionary<RigidBody3D, Vector3> _prevAngVel  = new();
@@ -85,6 +86,7 @@ public partial class BalanceController : Node, IBalanceable
         // Position doesn't matter (linear DOFs are free) but keep it tidy.
         _anchor.GlobalTransform      = new Transform3D(_lTorso.GlobalTransform.Basis, _lTorso.GlobalPosition);
         _balanceJoint.GlobalTransform = _anchor.GlobalTransform;
+        _anchorRestBasis              = _anchor.GlobalTransform.Basis;
 
         // Wire to anchor → lTorso using absolute paths
         _balanceJoint.NodeA = _anchor.GetPath();
@@ -151,17 +153,63 @@ public partial class BalanceController : Node, IBalanceable
     {
         if (!_enabled || !IsValid()) return;
 
+        // Track swing state before solving so we can detect transitions.
+        var leftWasStepping  = _leftLegIK?.IsStepping  ?? false;
+        var rightWasStepping = _rightLegIK?.IsStepping ?? false;
+
         _leftLegIK?.Solve();
         _rightLegIK?.Solve();
+
+        // Alternating step coordination: while one leg is mid-swing, lock the other.
+        // This prevents both feet lifting simultaneously and causing a faceplant.
+        if (_leftLegIK != null && _rightLegIK != null)
+        {
+            if (!leftWasStepping && _leftLegIK.IsStepping)
+                _rightLegIK.CanStep = false;   // left just started swinging — lock right
+            else if (leftWasStepping && !_leftLegIK.IsStepping)
+                _rightLegIK.CanStep = true;    // left just planted — unlock right
+
+            if (!rightWasStepping && _rightLegIK.IsStepping)
+                _leftLegIK.CanStep = false;    // right just started swinging — lock left
+            else if (rightWasStepping && !_rightLegIK.IsStepping)
+                _leftLegIK.CanStep = true;     // right just planted — unlock left
+        }
+
+        // Lean the anchor toward the input direction so the balance spring tips the CoM,
+        // causing the character to stumble toward the target.
+        // leanAxis = Up × leanDir gives the world-space rotation axis such that a positive
+        // angle tilts the anchor's X-axis (≈ world up) toward the input direction.
+        if (GodotObject.IsInstanceValid(_anchor))
+        {
+            Basis targetBasis;
+            if (_inputDir.LengthSquared() > 0.0001f)
+            {
+                var leanDir   = _inputDir.Normalized();
+                var leanAxis  = Vector3.Up.Cross(leanDir).Normalized();
+                var leanAngle = Mathf.Min(_inputDir.Length() * VelocityLean, Mathf.DegToRad(45f));
+                targetBasis   = new Basis(leanAxis, leanAngle) * _anchorRestBasis;
+            }
+            else
+            {
+                targetBasis = _anchorRestBasis;
+            }
+            _anchor.GlobalTransform = new Transform3D(targetBasis, _anchor.GlobalPosition);
+        }
 
         // Upright correction is now handled entirely by the implicit joint spring (_balanceJoint).
         // No ApplyTorque calls here — the constraint solver applies the spring force stably.
 
-        // Keep smoothed tilt error updated for future state machine (stumble/fall detection).
+        // Tilt-based state machine — collapse to full ragdoll when past StumbleAngle.
         if (GodotObject.IsInstanceValid(_lTorso))
         {
-            var rawError = _lTorso.GlobalTransform.Basis.X.Cross(Vector3.Up);
+            var torsoUp = _lTorso.GlobalTransform.Basis.X;
+            var tiltDeg = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(torsoUp.Dot(Vector3.Up), -1f, 1f)));
+
+            var rawError = torsoUp.Cross(Vector3.Up);
             _smoothedError = _smoothedError.Lerp(rawError, ErrorSmoothing);
+
+            if (State == BalanceState.Standing && tiltDeg > StumbleAngle)
+                Collapse();
         }
 
         // Jitter sampling — angular velocity change per tick, summed over 60 ticks.
@@ -192,8 +240,8 @@ public partial class BalanceController : Node, IBalanceable
         if (!LogEnabled || ++_logTick % 30 != 0) return;
 
         // Torso orientation — local X is world-up when standing (capsule rotated 90° in scene)
-        var torsoUp  = _lTorso.GlobalTransform.Basis.X;
-        var tiltDeg  = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(torsoUp.Dot(Vector3.Up), -1f, 1f)));
+        var logTorsoUp = _lTorso.GlobalTransform.Basis.X;
+        var logTiltDeg = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(logTorsoUp.Dot(Vector3.Up), -1f, 1f)));
 
         // Spine vector sanity check — geometry-independent, should agree with tiltDeg
         var spineAngleDeg = 0f;
@@ -236,20 +284,54 @@ public partial class BalanceController : Node, IBalanceable
                       :                          "AIRBORNE";
 
         // Tilt state classification (using exported threshold)
-        var tiltState  = tiltDeg < StumbleAngle ? "upright" : "stumbling";
+        var tiltState  = logTiltDeg < StumbleAngle ? "upright" : "stumbling";
 
         PluginLogger.Log(LogLevel.Debug,
-            $"[Balance] state={State} tilt={tiltDeg:F1}° spine={spineAngleDeg:F1}° ({tiltState}) | " +
+            $"[Balance] state={State} tilt={logTiltDeg:F1}° spine={spineAngleDeg:F1}° ({tiltState}) | " +
             $"angVel={angVel:F2} linVel={linVel:F2} | " +
             $"comPos={comPos:F2} comVel={comVel:F2} | " +
             $"support={support} | input={_inputDir:F2} rotate={_rotateDir:F2} | " +
             $"totalMass={totalMass:F2}");
 
-        // TODO: implement move force — apply horizontal force based on _inputDir
-        // TODO: implement stumble/fall state transitions based on tiltDeg
     }
 
-    public void Enable()  => _enabled = true;
+    /// <summary>
+    /// Give up — zero the balance joint and suspend IK. Full ragdoll physics takes over.
+    /// </summary>
+    private void Collapse()
+    {
+        State = BalanceState.Fallen;
+
+        // Kill the upright spring so the body stops fighting gravity.
+        if (GodotObject.IsInstanceValid(_balanceJoint))
+        {
+            _balanceJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+            _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+        }
+
+        // Stop driving leg joints — let them flop.
+        _leftLegIK?.SetActive(false);
+        _rightLegIK?.SetActive(false);
+    }
+
+    public void Enable()
+    {
+        _enabled = true;
+
+        // Restore from fallen: re-enable upright spring and IK.
+        if (State == BalanceState.Fallen)
+        {
+            State = BalanceState.Standing;
+            if (GodotObject.IsInstanceValid(_balanceJoint))
+            {
+                _balanceJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, PitchRollStiffness);
+                _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, PitchRollStiffness);
+            }
+            _leftLegIK?.SetActive(true);
+            _rightLegIK?.SetActive(true);
+        }
+    }
+
     public void Disable() => _enabled = false;
 
     public void StandUp()
