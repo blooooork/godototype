@@ -49,6 +49,7 @@ public partial class FootStepper : Node
     private Foot[]      _feet       = new Foot[2];
     private RigidBody3D _lTorso;
     private float       _legStiffness;
+    private bool        _enabled    = true;
 
     private const int L = 0, R = 1;
 
@@ -58,6 +59,21 @@ public partial class FootStepper : Node
     public bool    LeftSwing   => _feet[L].State == FootState.Swinging;
     public bool    RightSwing  => _feet[R].State == FootState.Swinging;
     public bool    IsReady     => _lTorso != null;
+
+    public void Enable()
+    {
+        _enabled = true;
+        for (int i = 0; i < 2; i++)
+            SetLegJointStiffness(ref _feet[i], _legStiffness);
+    }
+
+    public void Disable()
+    {
+        _enabled = false;
+        // Zero leg joint stiffness so legs go limp — they won't fight gravity during a fall.
+        for (int i = 0; i < 2; i++)
+            SetLegJointStiffness(ref _feet[i], 0f);
+    }
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -92,7 +108,7 @@ public partial class FootStepper : Node
 
     public override void _PhysicsProcess(double delta)
     {
-        if (_lTorso == null || !GodotObject.IsInstanceValid(_lTorso)) return;
+        if (!_enabled || _lTorso == null || !GodotObject.IsInstanceValid(_lTorso)) return;
 
         var dt = (float)delta;
 

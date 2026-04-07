@@ -584,7 +584,7 @@ public partial class RagdollCharacter : Node3D, IResettable
             _balanceController.MoveForce          = MoveForce;
             _balanceController.VelocityLean       = VelocityLean;
         }
-        _balanceController?.Init(_lTorso, _uTorso);
+        _balanceController?.Init(_lTorso, _uTorso, _footStepper);
         _balanceController?.SetBodies(_bodies[BodyGroup.All]);
 
         // Balance bodies: torso segments only. Including head/arms causes yaw instability —

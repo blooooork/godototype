@@ -25,6 +25,7 @@ public partial class BalanceController : Node, IBalanceable
     private bool                       _enabled;
     private Vector3                    _inputDir;
     private float                      _rotateDir;
+    private FootStepper                _footStepper;
 
     // Upright anchor joint — a frozen RigidBody3D sits at the torso's spawn orientation.
     // A Generic6DofJoint3D with angular spring on Y and Z pulls _lTorso back upright.
@@ -42,11 +43,12 @@ public partial class BalanceController : Node, IBalanceable
     private int _jitterTick;
     private int _logTick;
 
-    public void Init(RigidBody3D lTorso, RigidBody3D uTorso)
+    public void Init(RigidBody3D lTorso, RigidBody3D uTorso, FootStepper footStepper = null)
     {
-        _lTorso  = lTorso;
-        _uTorso  = uTorso;
-        _enabled = true;
+        _lTorso      = lTorso;
+        _uTorso      = uTorso;
+        _footStepper = footStepper;
+        _enabled     = true;
         CreateBalanceJoint();
     }
 
@@ -214,20 +216,23 @@ public partial class BalanceController : Node, IBalanceable
     private void Collapse()
     {
         State = BalanceState.Fallen;
-        if (!IsInstanceValid(_balanceJoint))
-            return;
-        _balanceJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
-        _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+        if (IsInstanceValid(_balanceJoint))
+        {
+            _balanceJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+            _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, 0f);
+        }
+        _footStepper?.Disable();
     }
 
     public void Enable()
     {
         _enabled = true;
-        if (State != BalanceState.Fallen || IsInstanceValid(_balanceJoint))
+        if (State != BalanceState.Fallen || !IsInstanceValid(_balanceJoint))
             return;
         State = BalanceState.Standing;
         _balanceJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, PitchRollStiffness);
         _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, PitchRollStiffness);
+        _footStepper?.Enable();
     }
 
     public void Disable() => _enabled = false;
