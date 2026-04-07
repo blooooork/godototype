@@ -7,14 +7,8 @@
 [ext_resource type="PackedScene" uid="uid://c11ctfan6g5iu" path="res://objects/player/ragdoll/limbs/Arm.tscn" id="6_tw8h2"]
 [ext_resource type="PackedScene" uid="uid://c14jtdoao3dah" path="res://objects/player/ragdoll/limbs/Leg.tscn" id="7_ns8cp"]
 [ext_resource type="Script" uid="uid://to6rapf4ird" path="res://objects/player/ragdoll/BalanceController.cs" id="8_balctrl"]
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_aaawk"]
-radius = 0.15
-height = 0.5
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_ns8cp"]
-radius = 0.15
-height = 0.5
+[ext_resource type="Script" uid="uid://dsk4jjsok1wdy" path="res://objects/player/ragdoll/RagdollDebugOverlay.cs" id="9_dbgovl"]
+[ext_resource type="Script" uid="uid://gsy52aopwdej" path="res://objects/player/ragdoll/FootStepper.cs" id="10_ftstep"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bma2p"]
 radius = 0.15
@@ -32,19 +26,22 @@ height = 0.5
 radius = 0.15
 height = 0.5
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1vdsp"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_20w8a"]
+radius = 0.15
+height = 0.5
+
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
-PassiveStiffness = 0.7
 SpineStiffness = 10.0
+LegStiffness = 15.0
 BodyDamping = 4.0
 ArmStiffness = 0.5
 ArmDamping = 0.25
 UprightStiffness = 15.0
-ErrorSmoothing = 1.0
-TiltDeadzone = 4.0
-MoveForce = 10.0
-VelocityLean = 0.8
-RotateTorque = 5.0
 
 [node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
 
@@ -65,30 +62,30 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.2, 0)
 mass = 0.33333334
 
 [node name="Segment0Col" type="CollisionShape3D" parent="Torso/Segment0" unique_id=998262334]
-shape = SubResource("CapsuleShape3D_aaawk")
+shape = SubResource("CapsuleShape3D_bma2p")
 
 [node name="Segment0Mesh" type="MeshInstance3D" parent="Torso/Segment0" unique_id=1774280116]
-mesh = SubResource("CapsuleMesh_ns8cp")
+mesh = SubResource("CapsuleMesh_i6eow")
 
 [node name="Segment1" type="RigidBody3D" parent="Torso" unique_id=1088368304]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
 mass = 0.33333334
 
 [node name="Segment1Col" type="CollisionShape3D" parent="Torso/Segment1" unique_id=1936746306]
-shape = SubResource("CapsuleShape3D_bma2p")
+shape = SubResource("CapsuleShape3D_yobyq")
 
 [node name="Segment1Mesh" type="MeshInstance3D" parent="Torso/Segment1" unique_id=822870555]
-mesh = SubResource("CapsuleMesh_i6eow")
+mesh = SubResource("CapsuleMesh_lyqat")
 
 [node name="Segment2" type="RigidBody3D" parent="Torso" unique_id=1549057748]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.2, 0)
 mass = 0.33333334
 
 [node name="Segment2Col" type="CollisionShape3D" parent="Torso/Segment2" unique_id=329248352]
-shape = SubResource("CapsuleShape3D_yobyq")
+shape = SubResource("CapsuleShape3D_1vdsp")
 
 [node name="Segment2Mesh" type="MeshInstance3D" parent="Torso/Segment2" unique_id=732869121]
-mesh = SubResource("CapsuleMesh_lyqat")
+mesh = SubResource("CapsuleMesh_20w8a")
 
 [node name="Joint0_1" type="Generic6DOFJoint3D" parent="Torso" unique_id=1225603397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
@@ -113,10 +110,17 @@ transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.2,
 Anchor = NodePath("../Torso/Segment2")
 
 [node name="LeftLeg" parent="." unique_id=945177328 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.2, -0.43878594, 8.742278e-09)
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.2, -0.43878594, 0)
 Anchor = NodePath("../Torso/Segment2")
 
 [node name="BalanceController" type="Node" parent="." unique_id=618791085]
 script = ExtResource("8_balctrl")
+
+[node name="FootStepper" type="Node" parent="." unique_id=223344556]
+script = ExtResource("10_ftstep")
+
+[node name="DebugOverlay" type="Node3D" parent="." unique_id=112233445]
+script = ExtResource("9_dbgovl")
+Enabled = true
 
 [editable path="Camera"]

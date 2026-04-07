@@ -7,8 +7,13 @@
 [ext_resource type="CapsuleMesh" uid="uid://58bxdd64bkff" path="res://objects/player/resources/UpperLegMesh.tres" id="4_meuq8"]
 [ext_resource type="CapsuleMesh" uid="uid://daw48erns85ld" path="res://objects/player/resources/LowerLegMesh.tres" id="5_f7071"]
 [ext_resource type="Shape3D" uid="uid://b8lsy43ms3g5x" path="res://objects/player/resources/LowerLegCollide.tres" id="6_1p1bh"]
-[ext_resource type="Shape3D" uid="uid://dd40wxjbfdug8" path="res://objects/player/resources/FootShape.tres" id="7_uergi"]
-[ext_resource type="BoxMesh" uid="uid://dbkcfxdl40475" path="res://objects/player/resources/FootMesh.tres" id="8_rlvk5"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_6m4rt"]
+radius = 0.1
+
+[sub_resource type="SphereMesh" id="SphereMesh_d1vnf"]
+radius = 0.1
+height = 0.2
 
 [node name="Leg" type="Node3D" unique_id=1168917906]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0, 0, 0)
@@ -94,18 +99,18 @@ node_a = NodePath("../../LLeg")
 node_b = NodePath("..")
 
 [node name="Foot" type="RigidBody3D" parent="." unique_id=1927056736]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, -0.5, 0)
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0, -0.5, 0)
 mass = 0.2
 
+[node name="GroundRay" type="RayCast3D" parent="Foot" unique_id=1847392015]
+transform = Transform3D(-4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 0, 0, 1, 0, 0, 0)
+target_position = Vector3(0, -0.3, 0)
+
 [node name="FootCollide" type="CollisionShape3D" parent="Foot" unique_id=1918599764]
-shape = ExtResource("7_uergi")
+shape = SubResource("SphereShape3D_6m4rt")
 
 [node name="FootMesh" type="MeshInstance3D" parent="Foot" unique_id=1282476204]
-mesh = ExtResource("8_rlvk5")
-
-[node name="GroundRay" type="RayCast3D" parent="Foot" unique_id=1847392015]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.059630394, 0, -2.6065272e-09)
-target_position = Vector3(0, -0.3, 0)
+mesh = SubResource("SphereMesh_d1vnf")
 
 [node name="FootTarget" type="Node3D" parent="." unique_id=999888777]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.44, 0)
