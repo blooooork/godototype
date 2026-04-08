@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="RagdollSettings" format=3 uid="uid://cx5sj2imxy4h1"]
+
+[ext_resource type="Script" uid="uid://cq6qocmobvkci" path="res://objects/player/ragdoll/RagdollSettings.cs" id="1_iu0jc"]
+
+[resource]
+resource_name = "Standard"
+script = ExtResource("1_iu0jc")
+SpineStiffness = 10.0
+BodyDamping = 4.0
+ArmStiffness = 0.5
+ArmDamping = 0.25
+UprightStiffness = 15.0
+YawDamping = 3.0
+StumbleAngle = 40.0
+MoveForce = 3.0
+StepBounce = 0.5
+LegLiftForce = 15.0
+LegDriveForce = 50.0
+FootSpringForce = 150.0
+metadata/_custom_type_script = "uid://cq6qocmobvkci"

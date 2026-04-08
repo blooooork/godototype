@@ -16,6 +16,11 @@ public partial class BalanceController : Node, IBalanceable
     public float VelocityLean       { get; set; } = 0.08f;
     public float MoveForce          { get; set; } = 5f;
     public float StumbleAngle       { get; set; } = 55f;
+    // Viscous drag applied to the lower torso's horizontal velocity when there is no input.
+    // The balance joint corrects tilt but leaves translational momentum untouched — without
+    // this, tiny spawn-settle velocities accumulate, drift the CoM, and trigger spurious steps.
+    public float IdleBrakingForce   { get; set; } = 20f;
+    public float TurnMaxSpeed       { get; set; } = 90f;
 
     public BalanceState State { get; private set; } = BalanceState.Standing;
 
@@ -24,7 +29,7 @@ public partial class BalanceController : Node, IBalanceable
     private IReadOnlyList<RigidBody3D> _bodies;
     private IReadOnlyList<RigidBody3D> _balanceBodies;
     private bool                       _enabled;
-    private Vector3                    _inputDir;
+    private Vector2                    _rawInput;
     private float                      _rotateDir;
     private FootStepper                _footStepper;
 
@@ -155,31 +160,74 @@ public partial class BalanceController : Node, IBalanceable
             var tiltDeg = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(torsoUp.Dot(Vector3.Up), -1f, 1f)));
             if (State == BalanceState.Standing && tiltDeg > StumbleAngle)
                 Collapse();
-            
-            Basis targetBasis;
-            if (_inputDir.LengthSquared() > 0.0001f)
+
+            // Resolve input each tick from the torso's current physical orientation so
+            // "forward" always means the direction the ragdoll is actually facing right now.
+            Vector3 inputDir;
+            if (_rawInput.LengthSquared() > 0.0001f)
             {
-                var leanDir   = _inputDir.Normalized();
+                // Basis.Y is the torso's right axis, not forward.
+                // Actual forward = Basis.Y.Cross(Up); right = Up.Cross(forward).
+                var rawRight  = _lTorso.GlobalTransform.Basis.Y;
+                var rightFlat = new Vector3(rawRight.X, 0f, rawRight.Z);
+                if (rightFlat.LengthSquared() > 0.01f)
+                {
+                    rightFlat     = rightFlat.Normalized();
+                    var fwdFlat   = rightFlat.Cross(Vector3.Up);
+                    var rightDir  = fwdFlat.Cross(Vector3.Up);
+                    inputDir      = fwdFlat * (-_rawInput.Y) + rightDir * _rawInput.X;
+                }
+                else
+                {
+                    // Torso is nearly horizontal (falling) — world fallback.
+                    inputDir = new Vector3(-_rawInput.Y, 0f, _rawInput.X);
+                }
+            }
+            else
+            {
+                inputDir = Vector3.Zero;
+            }
+
+            Basis targetBasis;
+            if (inputDir.LengthSquared() > 0.0001f)
+            {
+                var leanDir   = inputDir.Normalized();
                 var leanAxis  = Vector3.Up.Cross(leanDir).Normalized();
-                var leanAngle = Mathf.Min(_inputDir.Length() * VelocityLean, Mathf.DegToRad(45f));
+                var leanAngle = Mathf.Min(_rawInput.Length() * VelocityLean, Mathf.DegToRad(45f));
                 targetBasis   = new Basis(leanAxis, leanAngle) * _anchorRestBasis;
-                
+
                 // Directional force — lean alone is slow, force provides initial momentum.
-                _lTorso.ApplyCentralForce(_inputDir * MoveForce);
+                _lTorso.ApplyCentralForce(inputDir * MoveForce);
             }
             else
             {
                 targetBasis = _anchorRestBasis;
+                // Brake horizontal drift when idle.
+                // Proportional to XZ velocity so it fades as the body stops — no jerk.
+                if (IdleBrakingForce > 0f)
+                {
+                    var hVel = new Vector3(_lTorso.LinearVelocity.X, 0f, _lTorso.LinearVelocity.Z);
+                    _lTorso.ApplyCentralForce(-hVel * IdleBrakingForce);
+                }
             }
             _anchor.GlobalTransform = new Transform3D(targetBasis, _anchor.GlobalPosition);
 
-            // Yaw damping — resist spin around world up. Applied as explicit torque so
-            // the sign is unambiguous: positive YawDamping always opposes yaw velocity.
-            if (YawDamping != 0f)
+            // Unified yaw velocity controller.
+            // desiredYawVel drives rotation when input is held; at idle _rotateDir=0
+            // so desiredYawVel=0 and the term reduces to plain anti-spin damping.
+            // YawDamping is the controller gain (N·m per rad/s of error).
+            if (YawDamping != 0f || _rotateDir != 0f)
             {
-                var yawVel = _lTorso.AngularVelocity.Dot(Vector3.Up);
-                _lTorso.ApplyTorque(Vector3.Up * (-YawDamping * yawVel));
+                var desiredYawVel = _rotateDir * Mathf.DegToRad(TurnMaxSpeed);
+                var yawVel        = _lTorso.AngularVelocity.Dot(Vector3.Up);
+                _lTorso.ApplyTorque(Vector3.Up * (YawDamping * (desiredYawVel - yawVel)));
             }
+
+            // Accumulate the turn into _anchorRestBasis so the balance-spring upright
+            // reference and foot-target forward direction both rotate with the character.
+            if (_rotateDir != 0f)
+                _anchorRestBasis = new Basis(Vector3.Up, _rotateDir * Mathf.DegToRad(TurnMaxSpeed) * (float)delta)
+                                 * _anchorRestBasis;
         }
 
         // Jitter sampling — angular velocity delta per tick, reported once per second.
@@ -217,10 +265,15 @@ public partial class BalanceController : Node, IBalanceable
         }
         var tiltState = logTiltDeg < StumbleAngle ? "upright" : "stumbling";
 
+        var logRightRaw  = _lTorso.GlobalTransform.Basis.Y;
+        var logRightFlat = new Vector3(logRightRaw.X, 0f, logRightRaw.Z);
+        var logFacing    = logRightFlat.LengthSquared() > 0.01f
+            ? logRightFlat.Normalized().Cross(Vector3.Up)
+            : Vector3.Zero;
         PluginLogger.Log(LogLevel.Debug,
             $"[<TIMED>Balance] state={State} tilt={logTiltDeg:F1}° spine={spineAngleDeg:F1}° ({tiltState}) | " +
             $"angVel={_lTorso.AngularVelocity:F2} linVel={_lTorso.LinearVelocity:F2} | " +
-            $"comPos={comPos:F2} comVel={comVel:F2} | input={_inputDir:F2}");
+            $"comPos={comPos:F2} comVel={comVel:F2} | rawInput={_rawInput:F2} facing={logFacing:F2}");
     }
 
     private void Collapse()
@@ -247,9 +300,9 @@ public partial class BalanceController : Node, IBalanceable
 
     public void Disable() => _enabled = false;
 
-    public void SetInputDir(Vector3 dir, float rotate = 0f)
+    public void SetInputDir(Vector2 rawInput, float rotate = 0f)
     {
-        _inputDir  = dir;
+        _rawInput  = rawInput;
         _rotateDir = rotate;
     }
 

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://8q82ps5y4qgb" path="res://objects/player/ragdoll/RagdollCharacter.cs" id="1_6awg3"]
 [ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="1_qndj1"]
 [ext_resource type="PackedScene" uid="uid://c130pl5r5spoc" path="res://objects/player/ragdoll/limbs/Head.tscn" id="2_hmmqc"]
+[ext_resource type="Resource" uid="uid://cx5sj2imxy4h1" path="res://objects/player/ragdoll/strides/StandardStride.tres" id="2_i6eow"]
 [ext_resource type="PackedScene" uid="uid://d3vg0vpe0omtc" path="res://objects/player/ragdoll/limbs/Torso.tscn" id="4_aaawk"]
 [ext_resource type="PackedScene" uid="uid://c11ctfan6g5iu" path="res://objects/player/ragdoll/limbs/Arm.tscn" id="6_tw8h2"]
 [ext_resource type="PackedScene" uid="uid://c14jtdoao3dah" path="res://objects/player/ragdoll/limbs/Leg.tscn" id="7_ns8cp"]
@@ -10,45 +11,33 @@
 [ext_resource type="Script" uid="uid://dsk4jjsok1wdy" path="res://objects/player/ragdoll/RagdollDebugOverlay.cs" id="9_dbgovl"]
 [ext_resource type="Script" uid="uid://gsy52aopwdej" path="res://objects/player/ragdoll/FootStepper.cs" id="10_ftstep"]
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_bma2p"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i6eow"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_i6eow"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_yobyq"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_yobyq"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lyqat"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_lyqat"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1vdsp"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1vdsp"]
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_20w8a"]
 radius = 0.15
 height = 0.5
 
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_20w8a"]
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_il825"]
 radius = 0.15
 height = 0.5
 
 [node name="RagdollCharacter" type="Node3D" unique_id=385904974]
 script = ExtResource("1_6awg3")
-SpineStiffness = 10.0
-LegStiffness = 15.0
-BodyDamping = 4.0
-ArmStiffness = 0.5
-ArmDamping = 0.25
-YawDamping = 3.0
-StumbleAngle = 40.0
-StepTriggerDistance = 0.0
-CaptureGain = 0.3
-LegLiftForce = 12.0
-LegDriveDamp = 8.0
-FootSpringForce = 160.0
-FootSpringDamp = 15.0
+Settings = ExtResource("2_i6eow")
 
 [node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
 
@@ -69,30 +58,30 @@ transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.2, 0)
 mass = 0.33333334
 
 [node name="Segment0Col" type="CollisionShape3D" parent="Torso/Segment0" unique_id=998262334]
-shape = SubResource("CapsuleShape3D_bma2p")
+shape = SubResource("CapsuleShape3D_i6eow")
 
 [node name="Segment0Mesh" type="MeshInstance3D" parent="Torso/Segment0" unique_id=1774280116]
-mesh = SubResource("CapsuleMesh_i6eow")
+mesh = SubResource("CapsuleMesh_yobyq")
 
 [node name="Segment1" type="RigidBody3D" parent="Torso" unique_id=1088368304]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
 mass = 0.33333334
 
 [node name="Segment1Col" type="CollisionShape3D" parent="Torso/Segment1" unique_id=1936746306]
-shape = SubResource("CapsuleShape3D_yobyq")
+shape = SubResource("CapsuleShape3D_lyqat")
 
 [node name="Segment1Mesh" type="MeshInstance3D" parent="Torso/Segment1" unique_id=822870555]
-mesh = SubResource("CapsuleMesh_lyqat")
+mesh = SubResource("CapsuleMesh_1vdsp")
 
 [node name="Segment2" type="RigidBody3D" parent="Torso" unique_id=1549057748]
 transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.2, 0)
 mass = 0.33333334
 
 [node name="Segment2Col" type="CollisionShape3D" parent="Torso/Segment2" unique_id=329248352]
-shape = SubResource("CapsuleShape3D_1vdsp")
+shape = SubResource("CapsuleShape3D_20w8a")
 
 [node name="Segment2Mesh" type="MeshInstance3D" parent="Torso/Segment2" unique_id=732869121]
-mesh = SubResource("CapsuleMesh_20w8a")
+mesh = SubResource("CapsuleMesh_il825")
 
 [node name="Joint0_1" type="Generic6DOFJoint3D" parent="Torso" unique_id=1225603397]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)

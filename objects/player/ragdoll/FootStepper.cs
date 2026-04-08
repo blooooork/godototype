@@ -18,9 +18,15 @@ public partial class FootStepper : Node
 {
     // ── Tuning ───────────────────────────────────────────────────────────────
 
-    public float StepTriggerDistance { get; set; } = 0.25f;
-    public float StanceFwd           { get; set; } = 0.0f;
-    public float CaptureGain         { get; set; } = 0.25f;
+    public float StepTriggerDistance  { get; set; } = 0.25f;
+    public float StanceFwd            { get; set; } = 0.0f;
+    public float CaptureGain          { get; set; } = 0.25f;
+    // Below this XZ speed (m/s) the capture-point look-ahead is disabled and the foot
+    // targets directly under the CoM instead. Prevents tiny spawn-settle velocities from
+    // projecting targets slightly ahead, which would otherwise trigger steps and inject
+    // momentum, creating a positive-feedback loop when standing still with no input.
+    public float RestVelocityThreshold { get; set; } = 0.1f;
+    public float StepBounce     { get; set; } = 0f;
     public float LegLiftForce   { get; set; } = 8f;
     public float LegDriveForce  { get; set; } = 40f;
     public float LegDriveDamp   { get; set; } = 4f;
@@ -112,10 +118,12 @@ public partial class FootStepper : Node
 
         var dt = (float)delta;
 
-        var rawFwd  = _lTorso.GlobalTransform.Basis.Y;
-        var fwdFlat = new Vector3(rawFwd.X, 0f, rawFwd.Z);
-        if (fwdFlat.LengthSquared() < 0.01f) fwdFlat = Vector3.Forward;
-        fwdFlat = fwdFlat.Normalized();
+        // Basis.Y is the torso's right axis; actual forward = Basis.Y.Cross(Up).
+        var rawRight  = _lTorso.GlobalTransform.Basis.Y;
+        var rightFlat = new Vector3(rawRight.X, 0f, rawRight.Z);
+        var fwdFlat   = rightFlat.LengthSquared() > 0.01f
+            ? rightFlat.Normalized().Cross(Vector3.Up)
+            : Vector3.Forward;
 
         var groundY = ComputeGroundY();
 
@@ -125,9 +133,13 @@ public partial class FootStepper : Node
         // back under the body when decelerating, with no input required.
         // CaptureGain ≈ 1/ω where ω = sqrt(g/h): physically correct at ~0.25 for 0.6m
         // hip height. Higher values step further ahead — large values give inebriated overshoot.
-        var comXZ      = new Vector3(_lTorso.GlobalPosition.X,   groundY, _lTorso.GlobalPosition.Z);
-        var comVelXZ   = new Vector3(_lTorso.LinearVelocity.X,   0f,      _lTorso.LinearVelocity.Z);
-        var captureXZ  = comXZ + comVelXZ * CaptureGain;
+        var comXZ    = new Vector3(_lTorso.GlobalPosition.X, groundY, _lTorso.GlobalPosition.Z);
+        var comVelXZ = new Vector3(_lTorso.LinearVelocity.X, 0f,     _lTorso.LinearVelocity.Z);
+        // Only project the foot target ahead when actually moving — at rest, residual
+        // physics-settle velocity would displace the target and trigger spurious steps.
+        var captureXZ = comVelXZ.Length() > RestVelocityThreshold
+            ? comXZ + comVelXZ * CaptureGain
+            : comXZ;
 
         for (int i = 0; i < 2; i++)
         {
@@ -179,7 +191,9 @@ public partial class FootStepper : Node
                 {
                     f.State    = FootState.Planted;
                     f.Cooldown = StepCooldown;
-                    SetLegJointStiffness(ref f, _legStiffness);  // restore stance spring
+                    SetLegJointStiffness(ref f, _legStiffness);
+                    if (StepBounce > 0f)
+                        _lTorso.ApplyCentralImpulse(Vector3.Up * StepBounce);
                 }
             }
         }
