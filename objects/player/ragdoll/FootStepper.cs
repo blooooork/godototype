@@ -18,15 +18,16 @@ public partial class FootStepper : Node
 {
     // ── Tuning ───────────────────────────────────────────────────────────────
 
-    public float StepRadius     { get; set; } = 0.25f;
+    public float StepTriggerDistance { get; set; } = 0.25f;
     public float StanceFwd      { get; set; } = 0.0f;
     public float StepHorizon    { get; set; } = 0.12f;
+    public float StepLeanBias   { get; set; } = 0.0f;
     public float LegLiftForce   { get; set; } = 8f;
     public float LegDriveForce  { get; set; } = 40f;
     public float LegDriveDamp   { get; set; } = 4f;
     public float FootSpringForce { get; set; } = 120f;
     public float FootSpringDamp  { get; set; } = 10f;
-    public float PlantRadius    { get; set; } = 0.10f;
+    public float PlantTolerance { get; set; } = 0.10f;
     public float StepCooldown   { get; set; } = 0.20f;
 
     // ── Internal ─────────────────────────────────────────────────────────────
@@ -120,6 +121,14 @@ public partial class FootStepper : Node
         var groundY = ComputeGroundY();
         var fwdBias = fwdFlat * _lTorso.LinearVelocity.Dot(fwdFlat) * StepHorizon;
 
+        // Lean bias — step ahead in the direction the torso is tilting.
+        // torsoUp.XZ is zero when upright and grows to sin(tilt) as the body leans.
+        // This places feet ahead of the CoM so each step catches the fall rather than
+        // chasing under the hip. Without this, leaning forward just shuffles feet
+        // below the hip indefinitely with no corrective placement.
+        var torsoUp  = _lTorso.GlobalTransform.Basis.X;
+        var leanBias = new Vector3(torsoUp.X, 0f, torsoUp.Z) * StepLeanBias;
+
         for (int i = 0; i < 2; i++)
         {
             ref var f = ref _feet[i];
@@ -130,7 +139,7 @@ public partial class FootStepper : Node
             f.Cooldown = Mathf.Max(0f, f.Cooldown - dt);
 
             var hipXZ    = new Vector3(f.HipBody.GlobalPosition.X, groundY, f.HipBody.GlobalPosition.Z);
-            var idealPos = hipXZ + fwdFlat * StanceFwd + fwdBias;
+            var idealPos = hipXZ + fwdFlat * StanceFwd + fwdBias + leanBias;
             idealPos.Y   = groundY;
 
             if (f.State == FootState.Planted)
@@ -138,7 +147,7 @@ public partial class FootStepper : Node
                 bool  otherPlanted = _feet[1 - i].State == FootState.Planted;
                 float drift        = (f.Body.GlobalPosition - idealPos).Length();
 
-                if (f.Cooldown <= 0f && otherPlanted && drift > StepRadius)
+                if (f.Cooldown <= 0f && otherPlanted && drift > StepTriggerDistance)
                 {
                     f.Target = idealPos;
                     f.State  = FootState.Swinging;
@@ -163,7 +172,7 @@ public partial class FootStepper : Node
                 var err = f.Target - f.Body.GlobalPosition;
                 f.Body.ApplyCentralForce(err * FootSpringForce - f.Body.LinearVelocity * FootSpringDamp);
 
-                if (err.Length() < PlantRadius)
+                if (err.Length() < PlantTolerance)
                 {
                     f.State    = FootState.Planted;
                     f.Cooldown = StepCooldown;

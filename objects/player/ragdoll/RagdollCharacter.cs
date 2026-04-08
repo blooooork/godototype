@@ -88,6 +88,15 @@ public partial class RagdollCharacter : Node3D, IResettable
     // Raise if the body rocks back and forth after a correction.
     [Export] public float UprightDamping { get; set; } = 10f;
 
+    // Resistance to unintended yaw (vertical-axis) spin caused by asymmetric step forces.
+    // Applied as explicit torque: torque = -YawDamping × yaw_angular_velocity.
+    //   Positive = resists spin in whichever direction it's drifting (normal use).
+    //   Negative = assists spin — use if stepping circles the wrong way and you need
+    //              to push back. Start at 0, raise in small steps (try 2–8) until
+    //              the straight-ahead shuffle stops curving. Does not resist Q/E rotation
+    //              since that applies force directly to the torso, not via the yaw axis.
+    [Export] public float YawDamping { get; set; } = 0f;
+
     // Tilt angle (degrees) at which the character gives up and ragdolls.
     [Export] public float StumbleAngle { get; set; } = 55f;
 
@@ -102,14 +111,27 @@ public partial class RagdollCharacter : Node3D, IResettable
     // ── Stepping ──────────────────────────────────────────────────────────────
     [ExportGroup("Stepping")]
 
-    // Foot drifts this far from its ideal position before a step triggers (metres).
-    [Export] public float StepRadius      { get; set; } = 0.25f;
+    // How far the foot must drift from its ideal position before a new step fires (metres).
+    // This directly controls step frequency and stride length — smaller = steps fire sooner
+    // and more often, larger = feet lag further before correcting.
+    [Export] public float StepTriggerDistance { get; set; } = 0.25f;
 
     // How far ahead of the hip the foot targets in the movement direction.
     [Export] public float StanceFwd       { get; set; } = 0.0f;
 
     // Fraction of torso forward velocity added to step target (look-ahead). Forward only.
+    // Scales how far ahead of the hip the foot lands when moving fast.
+    // Too low = feet lag behind and the character shuffles. Too high = over-steps and stumbles.
     [Export] public float StepHorizon     { get; set; } = 0.12f;
+
+    // How far the foot target is pushed in the direction the torso is currently leaning (metres × sin(tilt)).
+    // This is the corrective placement — leaning forward steps the foot further forward so
+    // it catches the fall rather than chasing under the hip.
+    //   0   = feet always target directly under the hip (no lean correction).
+    //   0.3 = mild correction, suitable for slow shuffles.
+    //   0.6 = strong correction; feet step well ahead when leaning, good for faster movement.
+    // Too high = over-correction, feet step past the CoM and the character bounces backward.
+    [Export] public float StepLeanBias    { get; set; } = 0.0f;
 
     // Upward force on the upper leg during swing — lifts the foot off the ground.
     [Export] public float LegLiftForce    { get; set; } = 8f;
@@ -126,8 +148,9 @@ public partial class RagdollCharacter : Node3D, IResettable
     // Damping on the foot's velocity during swing.
     [Export] public float FootSpringDamp  { get; set; } = 10f;
 
-    // Foot is considered planted when within this distance of its target.
-    [Export] public float PlantRadius     { get; set; } = 0.10f;
+    // How close the swinging foot must get to its target before it plants (metres).
+    // Should be smaller than StepTriggerDistance or the foot plants before it arrives.
+    [Export] public float PlantTolerance  { get; set; } = 0.10f;
 
     // Minimum time between steps on the same foot.
     [Export] public float StepCooldown    { get; set; } = 0.20f;
@@ -580,6 +603,7 @@ public partial class RagdollCharacter : Node3D, IResettable
         {
             _balanceController.PitchRollStiffness = UprightStiffness;
             _balanceController.PitchRollDamping   = UprightDamping;
+            _balanceController.YawDamping         = YawDamping;
             _balanceController.StumbleAngle       = StumbleAngle;
             _balanceController.MoveForce          = MoveForce;
             _balanceController.VelocityLean       = VelocityLean;
@@ -604,15 +628,16 @@ public partial class RagdollCharacter : Node3D, IResettable
                 _leftAnkle,_rightAnkle,
                 LegStiffness);
 
-            _footStepper.StepRadius      = StepRadius;
-            _footStepper.StanceFwd       = StanceFwd;
-            _footStepper.StepHorizon     = StepHorizon;
+            _footStepper.StepTriggerDistance = StepTriggerDistance;
+            _footStepper.StanceFwd           = StanceFwd;
+            _footStepper.StepHorizon         = StepHorizon;
+            _footStepper.StepLeanBias        = StepLeanBias;
             _footStepper.LegLiftForce    = LegLiftForce;
             _footStepper.LegDriveForce   = LegDriveForce;
             _footStepper.LegDriveDamp    = LegDriveDamp;
             _footStepper.FootSpringForce = FootSpringForce;
             _footStepper.FootSpringDamp  = FootSpringDamp;
-            _footStepper.PlantRadius     = PlantRadius;
+            _footStepper.PlantTolerance  = PlantTolerance;
             _footStepper.StepCooldown    = StepCooldown;
         }
 

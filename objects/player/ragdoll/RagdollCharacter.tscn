@@ -42,7 +42,9 @@ BodyDamping = 4.0
 ArmStiffness = 0.5
 ArmDamping = 0.25
 UprightStiffness = 15.0
+YawDamping = 3.0
 StumbleAngle = 40.0
+StepTriggerDistance = 0.0
 
 [node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
 

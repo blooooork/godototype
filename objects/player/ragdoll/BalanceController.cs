@@ -12,6 +12,7 @@ public partial class BalanceController : Node, IBalanceable
 
     public float PitchRollStiffness { get; set; } = 30f;
     public float PitchRollDamping   { get; set; } = 10f;
+    public float YawDamping         { get; set; } = 10f;
     public float VelocityLean       { get; set; } = 0.08f;
     public float MoveForce          { get; set; } = 5f;
     public float StumbleAngle       { get; set; } = 55f;
@@ -87,12 +88,13 @@ public partial class BalanceController : Node, IBalanceable
         _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.LinearLowerLimit, -free);
         _balanceJoint.SetParamZ(Generic6DofJoint3D.Param.LinearUpperLimit,  free);
 
-        // Yaw (joint X = world-up in anchor frame): damping only, no stiffness.
-        // Resists unintended spin from asymmetric forces without locking player-driven rotation.
+        // Yaw (joint X = world-up in anchor frame): no spring, no damping.
+        // Yaw correction is applied via explicit ApplyTorque in ApplyBalance so the
+        // sign convention is transparent and positive YawDamping always resists spin.
         _balanceJoint.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularLimit,  false);
         _balanceJoint.SetFlagX(Generic6DofJoint3D.Flag.EnableAngularSpring, true);
         _balanceJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness,        0f);
-        _balanceJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,          PitchRollDamping);
+        _balanceJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringDamping,          0f);
         _balanceJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, 0f);
 
         // Pitch and roll: spring toward 0 = upright.
@@ -170,6 +172,14 @@ public partial class BalanceController : Node, IBalanceable
                 targetBasis = _anchorRestBasis;
             }
             _anchor.GlobalTransform = new Transform3D(targetBasis, _anchor.GlobalPosition);
+
+            // Yaw damping — resist spin around world up. Applied as explicit torque so
+            // the sign is unambiguous: positive YawDamping always opposes yaw velocity.
+            if (YawDamping != 0f)
+            {
+                var yawVel = _lTorso.AngularVelocity.Dot(Vector3.Up);
+                _lTorso.ApplyTorque(Vector3.Up * (-YawDamping * yawVel));
+            }
         }
 
         // Jitter sampling — angular velocity delta per tick, reported once per second.
