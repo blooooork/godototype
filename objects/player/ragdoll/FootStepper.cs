@@ -19,9 +19,8 @@ public partial class FootStepper : Node
     // ── Tuning ───────────────────────────────────────────────────────────────
 
     public float StepTriggerDistance { get; set; } = 0.25f;
-    public float StanceFwd      { get; set; } = 0.0f;
-    public float StepHorizon    { get; set; } = 0.12f;
-    public float StepLeanBias   { get; set; } = 0.0f;
+    public float StanceFwd           { get; set; } = 0.0f;
+    public float CaptureGain         { get; set; } = 0.25f;
     public float LegLiftForce   { get; set; } = 8f;
     public float LegDriveForce  { get; set; } = 40f;
     public float LegDriveDamp   { get; set; } = 4f;
@@ -119,15 +118,16 @@ public partial class FootStepper : Node
         fwdFlat = fwdFlat.Normalized();
 
         var groundY = ComputeGroundY();
-        var fwdBias = fwdFlat * _lTorso.LinearVelocity.Dot(fwdFlat) * StepHorizon;
 
-        // Lean bias — step ahead in the direction the torso is tilting.
-        // torsoUp.XZ is zero when upright and grows to sin(tilt) as the body leans.
-        // This places feet ahead of the CoM so each step catches the fall rather than
-        // chasing under the hip. Without this, leaning forward just shuffles feet
-        // below the hip indefinitely with no corrective placement.
-        var torsoUp  = _lTorso.GlobalTransform.Basis.X;
-        var leanBias = new Vector3(torsoUp.X, 0f, torsoUp.Z) * StepLeanBias;
+        // Capture point — where the foot must land for the body to reach equilibrium.
+        // Based on the Linear Inverted Pendulum Model: x_capture = x_com + v_com × gain.
+        // Using full XZ velocity (not just forward) means the foot automatically steps
+        // back under the body when decelerating, with no input required.
+        // CaptureGain ≈ 1/ω where ω = sqrt(g/h): physically correct at ~0.25 for 0.6m
+        // hip height. Higher values step further ahead — large values give inebriated overshoot.
+        var comXZ      = new Vector3(_lTorso.GlobalPosition.X,   groundY, _lTorso.GlobalPosition.Z);
+        var comVelXZ   = new Vector3(_lTorso.LinearVelocity.X,   0f,      _lTorso.LinearVelocity.Z);
+        var captureXZ  = comXZ + comVelXZ * CaptureGain;
 
         for (int i = 0; i < 2; i++)
         {
@@ -138,9 +138,12 @@ public partial class FootStepper : Node
 
             f.Cooldown = Mathf.Max(0f, f.Cooldown - dt);
 
-            var hipXZ    = new Vector3(f.HipBody.GlobalPosition.X, groundY, f.HipBody.GlobalPosition.Z);
-            var idealPos = hipXZ + fwdFlat * StanceFwd + fwdBias + leanBias;
-            idealPos.Y   = groundY;
+            // Lateral offset keeps this foot at the correct width relative to CoM.
+            // Using hip displacement from CoM preserves natural foot spread without a separate parameter.
+            var hipXZ         = new Vector3(f.HipBody.GlobalPosition.X, groundY, f.HipBody.GlobalPosition.Z);
+            var lateralOffset = hipXZ - comXZ;
+            var idealPos      = captureXZ + lateralOffset + fwdFlat * StanceFwd;
+            idealPos.Y        = groundY;
 
             if (f.State == FootState.Planted)
             {

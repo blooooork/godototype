@@ -41,10 +41,14 @@ LegStiffness = 15.0
 BodyDamping = 4.0
 ArmStiffness = 0.5
 ArmDamping = 0.25
-UprightStiffness = 15.0
 YawDamping = 3.0
 StumbleAngle = 40.0
 StepTriggerDistance = 0.0
+CaptureGain = 0.3
+LegLiftForce = 12.0
+LegDriveDamp = 8.0
+FootSpringForce = 160.0
+FootSpringDamp = 15.0
 
 [node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
 

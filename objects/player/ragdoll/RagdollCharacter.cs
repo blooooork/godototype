@@ -119,19 +119,15 @@ public partial class RagdollCharacter : Node3D, IResettable
     // How far ahead of the hip the foot targets in the movement direction.
     [Export] public float StanceFwd       { get; set; } = 0.0f;
 
-    // Fraction of torso forward velocity added to step target (look-ahead). Forward only.
-    // Scales how far ahead of the hip the foot lands when moving fast.
-    // Too low = feet lag behind and the character shuffles. Too high = over-steps and stumbles.
-    [Export] public float StepHorizon     { get; set; } = 0.12f;
-
-    // How far the foot target is pushed in the direction the torso is currently leaning (metres × sin(tilt)).
-    // This is the corrective placement — leaning forward steps the foot further forward so
-    // it catches the fall rather than chasing under the hip.
-    //   0   = feet always target directly under the hip (no lean correction).
-    //   0.3 = mild correction, suitable for slow shuffles.
-    //   0.6 = strong correction; feet step well ahead when leaning, good for faster movement.
-    // Too high = over-correction, feet step past the CoM and the character bounces backward.
-    [Export] public float StepLeanBias    { get; set; } = 0.0f;
+    // Controls the capture-point foot placement (Linear Inverted Pendulum Model).
+    // Foot target = CoM_position + CoM_velocity × CaptureGain, keeping each foot
+    // laterally offset by its hip position so stance width is preserved naturally.
+    // This drives automatic balance recovery — when the body decelerates or stops leaning,
+    // feet step back under the CoM without any input from the player.
+    //   ~0.25 = physically accurate for a ~0.6 m hip height (ω = sqrt(g/h) ≈ 4.0).
+    //   Lower  = sluggish recovery, character may still topple when stopping.
+    //   Higher = aggressive stepping, feet overshoot — gives an inebriated stagger at large values.
+    [Export] public float CaptureGain     { get; set; } = 0.25f;
 
     // Upward force on the upper leg during swing — lifts the foot off the ground.
     [Export] public float LegLiftForce    { get; set; } = 8f;
@@ -630,8 +626,7 @@ public partial class RagdollCharacter : Node3D, IResettable
 
             _footStepper.StepTriggerDistance = StepTriggerDistance;
             _footStepper.StanceFwd           = StanceFwd;
-            _footStepper.StepHorizon         = StepHorizon;
-            _footStepper.StepLeanBias        = StepLeanBias;
+            _footStepper.CaptureGain         = CaptureGain;
             _footStepper.LegLiftForce    = LegLiftForce;
             _footStepper.LegDriveForce   = LegDriveForce;
             _footStepper.LegDriveDamp    = LegDriveDamp;
