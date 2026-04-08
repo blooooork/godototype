@@ -166,10 +166,11 @@ public partial class BalanceController : Node, IBalanceable
             Vector3 inputDir;
             if (_rawInput.LengthSquared() > 0.0001f)
             {
-                // Basis.Y is the torso's right axis, not forward.
-                // Actual forward = Basis.Y.Cross(Up); right = Up.Cross(forward).
-                var rawRight  = _lTorso.GlobalTransform.Basis.Y;
-                var rightFlat = new Vector3(rawRight.X, 0f, rawRight.Z);
+                // _anchorRestBasis.Y is the character's right axis (same convention as Basis.Y).
+                // Using the anchor rather than the physical torso means the lean direction
+                // updates immediately when a rotate key is held, not after physics lag.
+                var anchorRight = _anchorRestBasis.Y;
+                var rightFlat   = new Vector3(anchorRight.X, 0f, anchorRight.Z);
                 if (rightFlat.LengthSquared() > 0.01f)
                 {
                     rightFlat     = rightFlat.Normalized();
