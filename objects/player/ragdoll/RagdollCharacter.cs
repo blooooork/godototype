@@ -46,6 +46,7 @@ public partial class RagdollCharacter : Node3D, IResettable
     private Action<string> _onJump;
     private Action<string> _onCrouch;
     private Action<string> _onCrouchRelease;
+    private Action<string> _onInteract;
     private Action<string> _onForward, _onBackward, _onStrafeLeft, _onStrafeRight, _onRotateLeft, _onRotateRight;
 
     // Joints managed by ragdoll toggle (everything except left leg)
@@ -107,6 +108,7 @@ public partial class RagdollCharacter : Node3D, IResettable
     {
         InputManager.Unsubscribe(nameof(GameAction.Jump),        onJustPressed: _onJump);
         InputManager.Unsubscribe(nameof(GameAction.Crouch),      onJustPressed: _onCrouch,      onJustReleased: _onCrouchRelease);
+        InputManager.Unsubscribe(nameof(GameAction.Interact),    onJustPressed: _onInteract);
         InputManager.Unsubscribe(nameof(GameAction.Forward),     onJustPressed: _onForward,     onJustReleased: _onForward);
         InputManager.Unsubscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward,    onJustReleased: _onBackward);
         InputManager.Unsubscribe(nameof(GameAction.StrafeLeft),  onJustPressed: _onStrafeLeft,  onJustReleased: _onStrafeLeft);
@@ -219,10 +221,11 @@ public partial class RagdollCharacter : Node3D, IResettable
             _restTransforms[body] = body.Transform;
 
         // Register input actions
-        InputManager.Subscribe(nameof(GameAction.Jump),   onJustPressed: _onJump = _ => Jump());
+        InputManager.Subscribe(nameof(GameAction.Jump),     onJustPressed: _onJump     = _ => Jump());
+        InputManager.Subscribe(nameof(GameAction.Interact), onJustPressed: _onInteract = _ => SetTPose(_isActive));
         InputManager.Subscribe(nameof(GameAction.Crouch),
-            onJustPressed:  _onCrouch        = _ => SetTPose(true),
-            onJustReleased: _onCrouchRelease = _ => SetTPose(false));
+            onJustPressed:  _onCrouch        = _ => Crouch(true),
+            onJustReleased: _onCrouchRelease = _ => Crouch(false));
 
         InputManager.Subscribe(nameof(GameAction.Forward),     onJustPressed: _onForward     = _ => UpdateInputDir(), onJustReleased: _onForward);
         InputManager.Subscribe(nameof(GameAction.Backward),    onJustPressed: _onBackward    = _ => UpdateInputDir(), onJustReleased: _onBackward);
@@ -338,6 +341,11 @@ public partial class RagdollCharacter : Node3D, IResettable
     {
         _lTorso.ApplyCentralImpulse(Vector3.Up * S.JumpForce * _lTorso.Mass);
         _balanceController?.OnJump();
+    }
+
+    private void Crouch(bool crouching)
+    {
+        // TODO: implement crouch
     }
 
     // SetTPose(true)  = Ctrl held: snap all joints toward spawn/T-pose by cranking stiffness.

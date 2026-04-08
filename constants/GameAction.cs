@@ -10,5 +10,6 @@ public enum GameAction
     RotateLeft,
     RotateRight,
     Sprint,
-    Crouch
+    Crouch,
+    Interact
 }
