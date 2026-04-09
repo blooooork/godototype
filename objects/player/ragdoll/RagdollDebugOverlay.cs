@@ -94,7 +94,18 @@ public partial class RagdollDebugOverlay : Node3D
         _mesh.SurfaceBegin(Mesh.PrimitiveType.Lines);
 
         var com     = ComputeCoM();
+        var comVel  = ComputeCoMVelocity();
         var groundY = ComputeGroundY();
+
+        // ── Momentum arrow ────────────────────────────────────────────────────
+        // XZ velocity projected to the ground plane — shows where the rig is heading
+        // and grows/shrinks linearly with speed (0.2 m per m/s, min 0.05 m/s to draw).
+        var velXZ = new Vector3(comVel.X, 0f, comVel.Z);
+        if (velXZ.Length() > 0.05f)
+        {
+            Col(new Color(0.5f, 1f, 0.1f)); // lime — distinct from cyan anchor, orange posture, green feet
+            DrawArrow(com, velXZ, velXZ.Length() * 0.2f);
+        }
 
         // ── CoM sphere + ground projection ───────────────────────────────────
         Col(Colors.Yellow);
@@ -199,6 +210,37 @@ public partial class RagdollDebugOverlay : Node3D
             tot += b.Mass;
         }
         return tot > 0f ? pos / tot : Vector3.Zero;
+    }
+
+    private Vector3 ComputeCoMVelocity()
+    {
+        var vel   = Vector3.Zero;
+        float tot = 0f;
+        foreach (var b in _bodies)
+        {
+            if (!IsInstanceValid(b)) continue;
+            vel += b.LinearVelocity * b.Mass;
+            tot += b.Mass;
+        }
+        return tot > 0f ? vel / tot : Vector3.Zero;
+    }
+
+    /// Draws a line from <paramref name="origin"/> in <paramref name="dir"/> scaled to
+    /// <paramref name="length"/>, with a two-line arrowhead at the tip.
+    private void DrawArrow(Vector3 origin, Vector3 dir, float length)
+    {
+        if (dir.LengthSquared() < 0.0001f) return;
+        var d   = dir.Normalized();
+        var tip = origin + d * length;
+        DrawLine(origin, tip);
+
+        // Arrowhead: two lines angled 35° back from the tip in the XZ plane.
+        var perp      = new Vector3(-d.Z, 0f, d.X); // 90° rotation in XZ
+        var headLen   = Mathf.Min(length * 0.35f, 0.18f);
+        var headBack  = -d * headLen * Mathf.Cos(Mathf.DegToRad(35f));
+        var headSpread = perp * headLen * Mathf.Sin(Mathf.DegToRad(35f));
+        DrawLine(tip, tip + headBack + headSpread);
+        DrawLine(tip, tip + headBack - headSpread);
     }
 
     /// Lowest body Y in the rig — good enough estimate of floor level.

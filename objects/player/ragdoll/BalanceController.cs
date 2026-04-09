@@ -45,13 +45,25 @@ public partial class BalanceController : Node, IBalanceable
     private Generic6DofJoint3D _balanceJoint;
     private Basis              _anchorRestBasis;
 
-    private const bool  LogEnabled         = true;
-    private const float JitterLogThreshold = 15f;
+    private const float JitterLogThreshold  = 15f;
+
+    // Reactive log settings.
+    // DebounceLog = true: repeated lean events fire at most once per LeanLogCooldown seconds.
+    // DebounceLog = false: every lean tick is logged — useful for a single-frame investigation,
+    //                      spammy for sustained drift.
+    private const bool  LogEnabled       = true;
+    private const bool  DebounceLog      = true;
+    private const float LeanLogThreshold = 0.04f;  // m — below this the lean is noise
+    private const float LeanLogCooldown  = 1.0f;   // s — min gap between sustained-lean reports
+    private const float TiltWarnFraction = 0.75f;  // fraction of StumbleAngle that triggers warning
+
+    private bool  _wasLeanActive  = false;
+    private float _leanLogTimer   = 0f;
+    private bool  _wasTiltWarning = false;
 
     private Dictionary<RigidBody3D, Vector3> _prevAngVel  = new();
     private Dictionary<RigidBody3D, float>   _jitterAccum = new();
     private int _jitterTick;
-    private int _logTick;
 
     public void Init(RigidBody3D lTorso, RigidBody3D uTorso, FootStepper footStepper = null)
     {
@@ -173,6 +185,16 @@ public partial class BalanceController : Node, IBalanceable
             if (State == BalanceState.Standing && tiltDeg > StumbleAngle)
                 Collapse();
 
+            if (LogEnabled)
+            {
+                var tiltWarn = tiltDeg > StumbleAngle * TiltWarnFraction;
+                if (tiltWarn && !_wasTiltWarning)
+                    GD.Print($"[Balance] Tilt warning  {tiltDeg:F1}° ({tiltDeg / StumbleAngle * 100f:F0}% of {StumbleAngle:F0}° limit)");
+                else if (!tiltWarn && _wasTiltWarning)
+                    GD.Print($"[Balance] Tilt recovered  {tiltDeg:F1}°");
+                _wasTiltWarning = tiltWarn;
+            }
+
             // Resolve input each tick from the torso's current physical orientation so
             // "forward" always means the direction the ragdoll is actually facing right now.
             Vector3 inputDir;
@@ -230,20 +252,61 @@ public partial class BalanceController : Node, IBalanceable
             }
 
             // CoM-to-support-centre restoring force (ankle + hip strategy).
-            // Pulls the whole-body CoM back toward the midpoint of planted feet.
-            // Runs every tick regardless of input — corrects position drift that the
-            // orientation-only balance joint cannot address.
-            if (LeanRestoreForce > 0f && _footStepper != null)
+            // leanErr is computed unconditionally so reactive logging works even when
+            // LeanRestoreForce = 0. Force is only applied when the parameter is nonzero.
+            var leanErr      = Vector3.Zero;
+            var hasSupportPt = false;
+            if (_footStepper != null)
             {
                 var supportCenter = _footStepper.GetSupportCenter();
                 if (supportCenter.HasValue)
                 {
                     var comXZ    = new Vector3(comPos.X, 0f, comPos.Z);
                     var centerXZ = new Vector3(supportCenter.Value.X, 0f, supportCenter.Value.Z);
-                    var leanErr  = comXZ - centerXZ;
-                    var comVelXZ = new Vector3(comVel.X, 0f, comVel.Z);
-                    _lTorso.ApplyCentralForce(-leanErr * LeanRestoreForce - comVelXZ * LeanRestoreDamping);
+                    leanErr      = comXZ - centerXZ;
+                    hasSupportPt = true;
+
+                    if (LeanRestoreForce > 0f)
+                    {
+                        var comVelXZ = new Vector3(comVel.X, 0f, comVel.Z);
+                        _lTorso.ApplyCentralForce(-leanErr * LeanRestoreForce - comVelXZ * LeanRestoreDamping);
+                    }
                 }
+            }
+
+            // Reactive lean logging.
+            if (LogEnabled && hasSupportPt)
+            {
+                var leanMag    = leanErr.Length();
+                var leanActive = leanMag > LeanLogThreshold;
+                _leanLogTimer  = Mathf.Max(0f, _leanLogTimer - (float)delta);
+
+                // input arrow: X=strafe, negate Y because -rawInput.Y = forward in our convention
+                var inArrow  = DirectionArrow(_rawInput.X, -_rawInput.Y);
+                var velArrow = VelocityArrow(comVel, out var speed);
+                var speedStr = $"{speed:F1}m/s";
+
+                if (leanActive && !_wasLeanActive)
+                {
+                    // Rising edge — log immediately.
+                    var forceStr = LeanRestoreForce > 0f
+                        ? $"  restore={(-leanErr * LeanRestoreForce).Length():F1}N"
+                        : "  (no restore force)";
+                    GD.Print($"[Balance] Lean engaged  {leanMag:F2}m  in:{inArrow}  vel:{velArrow}{speedStr}{forceStr}");
+                    _leanLogTimer = LeanLogCooldown;
+                }
+                else if (leanActive && (!DebounceLog || _leanLogTimer <= 0f))
+                {
+                    // Sustained — debounced repeat.
+                    GD.Print($"[Balance] Lean sustained  {leanMag:F2}m  in:{inArrow}  vel:{velArrow}{speedStr}");
+                    _leanLogTimer = LeanLogCooldown;
+                }
+                else if (!leanActive && _wasLeanActive)
+                {
+                    GD.Print($"[Balance] Lean settled  in:{inArrow}  vel:{velArrow}{speedStr}");
+                }
+
+                _wasLeanActive = leanActive;
             }
 
             _anchor.GlobalTransform = new Transform3D(targetBasis, _anchor.GlobalPosition);
@@ -287,33 +350,13 @@ public partial class BalanceController : Node, IBalanceable
             }
             _jitterAccum.Clear();
         }
-
-        // Log every 30 ticks (~0.5 s).
-        if (!LogEnabled || ++_logTick % 30 != 0) return;
-
-        var logTorsoUp    = _lTorso.GlobalTransform.Basis.X;
-        var logTiltDeg    = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(logTorsoUp.Dot(Vector3.Up), -1f, 1f)));
-        var spineAngleDeg = 0f;
-        if (_uTorso != null && IsInstanceValid(_uTorso))
-        {
-            var spine = (_uTorso.GlobalPosition - _lTorso.GlobalPosition).Normalized();
-            spineAngleDeg = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(spine.Dot(Vector3.Up), -1f, 1f)));
-        }
-        var tiltState = logTiltDeg < StumbleAngle ? "upright" : "stumbling";
-
-        var logRightRaw  = _lTorso.GlobalTransform.Basis.Y;
-        var logRightFlat = new Vector3(logRightRaw.X, 0f, logRightRaw.Z);
-        var logFacing    = logRightFlat.LengthSquared() > 0.01f
-            ? logRightFlat.Normalized().Cross(Vector3.Up)
-            : Vector3.Zero;
-        PluginLogger.Log(LogLevel.Debug,
-            $"[<TIMED>Balance] state={State} tilt={logTiltDeg:F1}° spine={spineAngleDeg:F1}° ({tiltState}) | " +
-            $"angVel={_lTorso.AngularVelocity:F2} linVel={_lTorso.LinearVelocity:F2} | " +
-            $"comPos={comPos:F2} comVel={comVel:F2} | rawInput={_rawInput:F2} facing={logFacing:F2}");
     }
 
     private void Collapse()
     {
+        var tiltDeg = Mathf.RadToDeg(Mathf.Acos(Mathf.Clamp(
+            _lTorso.GlobalTransform.Basis.X.Dot(Vector3.Up), -1f, 1f)));
+        GD.Print($"[Balance] COLLAPSED  tilt={tiltDeg:F1}°  linVel={_lTorso.LinearVelocity:F2}");
         State = BalanceState.Fallen;
         if (IsInstanceValid(_balanceJoint))
         {
@@ -344,4 +387,32 @@ public partial class BalanceController : Node, IBalanceable
 
     public void OnJump() { }
     public void StandUp() { }
+
+    // ── Log helpers ───────────────────────────────────────────────────────────
+
+    /// Maps a 2D XY direction to a unicode arrow (8-way). Returns · when below threshold.
+    private static string DirectionArrow(float x, float y)
+    {
+        if (x * x + y * y < 0.05f) return "·";
+        int oct = ((int)Mathf.Round(Mathf.Atan2(y, x) * 4f / Mathf.Pi) % 8 + 8) % 8;
+        return oct switch { 0 => "→", 1 => "↗", 2 => "↑", 3 => "↖",
+                            4 => "←", 5 => "↙", 6 => "↓", 7 => "↘", _ => "·" };
+    }
+
+    /// Projects world-space XZ velocity onto character-local forward/right axes and
+    /// returns a unicode arrow. Reads from _anchorRestBasis so it matches the facing used
+    /// by the balance spring — same reference the input direction is resolved against.
+    private string VelocityArrow(Vector3 worldVel, out float speed)
+    {
+        var velXZ     = new Vector3(worldVel.X, 0f, worldVel.Z);
+        speed         = velXZ.Length();
+        var rightRaw  = _anchorRestBasis.Y;
+        var rightFlat = new Vector3(rightRaw.X, 0f, rightRaw.Z);
+        if (rightFlat.LengthSquared() < 0.01f) return "·";
+        rightFlat     = rightFlat.Normalized();
+        var fwdFlat   = rightFlat.Cross(Vector3.Up);
+        // Actual character right = fwdFlat.Cross(Up) = -rightFlat (vector triple product).
+        // Negate the right component so the arrow matches the strafe convention.
+        return DirectionArrow(-velXZ.Dot(rightFlat), velXZ.Dot(fwdFlat));
+    }
 }
