@@ -21,6 +21,10 @@ public partial class BalanceController : Node, IBalanceable
     // this, tiny spawn-settle velocities accumulate, drift the CoM, and trigger spurious steps.
     public float IdleBrakingForce   { get; set; } = 20f;
     public float TurnMaxSpeed       { get; set; } = 90f;
+    // PD spring pulling the whole-body CoM toward the support polygon centre (planted foot midpoint).
+    // Equivalent to the ankle+hip strategy in Euphoria — corrects position drift without stepping.
+    public float LeanRestoreForce   { get; set; } = 0f;
+    public float LeanRestoreDamping { get; set; } = 0f;
 
     public BalanceState State { get; private set; } = BalanceState.Standing;
 
@@ -224,6 +228,24 @@ public partial class BalanceController : Node, IBalanceable
                     _lTorso.ApplyCentralForce(-hVel * IdleBrakingForce);
                 }
             }
+
+            // CoM-to-support-centre restoring force (ankle + hip strategy).
+            // Pulls the whole-body CoM back toward the midpoint of planted feet.
+            // Runs every tick regardless of input — corrects position drift that the
+            // orientation-only balance joint cannot address.
+            if (LeanRestoreForce > 0f && _footStepper != null)
+            {
+                var supportCenter = _footStepper.GetSupportCenter();
+                if (supportCenter.HasValue)
+                {
+                    var comXZ    = new Vector3(comPos.X, 0f, comPos.Z);
+                    var centerXZ = new Vector3(supportCenter.Value.X, 0f, supportCenter.Value.Z);
+                    var leanErr  = comXZ - centerXZ;
+                    var comVelXZ = new Vector3(comVel.X, 0f, comVel.Z);
+                    _lTorso.ApplyCentralForce(-leanErr * LeanRestoreForce - comVelXZ * LeanRestoreDamping);
+                }
+            }
+
             _anchor.GlobalTransform = new Transform3D(targetBasis, _anchor.GlobalPosition);
 
             // Unified yaw velocity controller.

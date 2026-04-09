@@ -348,7 +348,8 @@ public partial class RagdollCharacter : Node3D, IResettable
         // Knees
         _footStepper?.SetCrouching(crouching,
             Mathf.DegToRad(S.CrouchKneeAngle),
-            Mathf.DegToRad(S.CrouchHipAngle));
+            Mathf.DegToRad(S.CrouchHipAngle),
+            Mathf.DegToRad(S.CrouchAnkleAngle));
 
         // Stiffen spine and neck to keep the column stacked — shoulders are excluded
         // because their equilibrium is the T-pose rest position and stiffening them
@@ -548,6 +549,8 @@ public partial class RagdollCharacter : Node3D, IResettable
             _balanceController.MoveForce          = S.MoveForce;
             _balanceController.VelocityLean       = S.VelocityLean;
             _balanceController.IdleBrakingForce   = S.IdleBrakingForce;
+            _balanceController.LeanRestoreForce   = S.LeanRestoreForce;
+            _balanceController.LeanRestoreDamping = S.LeanRestoreDamping;
             _balanceController.TurnMaxSpeed       = S.TurnMaxSpeed;
         }
         _balanceController?.Init(_lTorso, _uTorso, _footStepper);

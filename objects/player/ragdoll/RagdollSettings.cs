@@ -106,6 +106,19 @@ public partial class RagdollSettings : Resource
     // Does not apply once input is held, so walking force is unaffected.
     [Export] public float IdleBrakingForce { get; set; } = 20f;
 
+    // PD spring pulling the whole-body CoM back toward the planted-foot midpoint.
+    // Implements the ankle + hip strategy — resists idle lean and position drift without
+    // requiring a step. The balance joint corrects tilt (orientation); this corrects drift
+    // (position). Start at 0 and raise in steps: try 10 → 20 → 40.
+    // Too high = jerky snap-back or fights walking; too low = drift persists.
+    [Export] public float LeanRestoreForce   { get; set; } = 0f;
+
+    // Damping on the lean-restore spring. Prevents the CoM from oscillating around the
+    // support centre after a correction. Raise if you see the body rock back and forth.
+    // Typical range: 5–15. Should be roughly LeanRestoreForce / 3.
+    [Export] public float LeanRestoreDamping { get; set; } = 0f;
+
+
     // ── Stepping ──────────────────────────────────────────────────────────────
     [ExportGroup("Stepping")]
 
@@ -189,4 +202,21 @@ public partial class RagdollSettings : Resource
     // The hip and knee together geometrically lower the CoM — no downward force needed.
     // Start around half of CrouchKneeAngle and tune from there.
     [Export] public float CrouchHipAngle { get; set; } = 20f;
+
+    // Ankle compensation angle when crouching (degrees).
+    // Works through two mechanisms depending on foot state:
+    //
+    //   Planted foot: the foot is spring-held in place, so ankle torque acts on the SHIN
+    //   instead — rotating it backward and pulling the knee back over the foot. This is
+    //   the primary defence against the forward body tip that bent knees create, because
+    //   it geometrically recentres the knee mass over the support polygon.
+    //
+    //   Swinging foot: affects where the foot lands — dorsiflexion makes the step target
+    //   land further back, preventing micro-steps from forward shin lean.
+    //
+    // Use a NEGATIVE value (dorsiflexion, opposite to CrouchKneeAngle's sign).
+    // Start at roughly -(CrouchKneeAngle / 2) and tune from there.
+    // Too much (too negative) = shin rocks backward and foot lifts; too little = forward tip persists.
+    // LeanRestoreForce (above) is the primary position correction; this is the geometric complement.
+    [Export] public float CrouchAnkleAngle { get; set; } = 0f;
 }

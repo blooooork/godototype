@@ -56,9 +56,10 @@ public partial class FootStepper : Node
     private RigidBody3D _lTorso;
     private float       _legStiffness;
     private bool        _enabled    = true;
-    private bool        _crouching      = false;
+    private bool        _crouching       = false;
     private float       _crouchKneeAngle = 0f;
     private float       _crouchHipAngle  = 0f;
+    private float       _crouchAnkleAngle = 0f;
 
     private const int L = 0, R = 1;
 
@@ -213,6 +214,30 @@ public partial class FootStepper : Node
                 ApplyCrouchEquilibria(ref f, true);
             }
         }
+
+        // ── Planted leg hip bias ──────────────────────────────────────────────
+        // Bias each planted hip equilibrium against the lean so the leg visually braces
+        // rather than being a passive passenger while LeanRestoreForce corrects the torso.
+        // Derived directly from the lean error — no separate tuner needed since the
+        // step threshold already bounds how far the lean can grow before a step fires.
+        {
+            var torsoXZ = new Vector3(_lTorso.GlobalPosition.X, 0f, _lTorso.GlobalPosition.Z);
+            for (int i = 0; i < 2; i++)
+            {
+                ref var f = ref _feet[i];
+                if (f.State != FootState.Planted || !GodotObject.IsInstanceValid(f.HipJoint)) continue;
+
+                var footXZ    = new Vector3(f.Target.X, 0f, f.Target.Z);
+                var leanFwd   = (torsoXZ - footXZ).Dot(fwdFlat);
+                // leanFwd > 0 → CoM is ahead of foot → extend hip (negative) to brace back.
+                // Clamped to ±0.4 rad (~23°); at StepTriggerDistance = 0.25 m the natural
+                // bias is 0.25 rad (~14°) which is a visible but not extreme brace.
+                var hipBias   = Mathf.Clamp(-leanFwd, -0.4f, 0.4f);
+                var baseAngle = _crouching ? _crouchHipAngle : 0f;
+                f.HipJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint,
+                    baseAngle + hipBias);
+            }
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -237,13 +262,23 @@ public partial class FootStepper : Node
         if (GodotObject.IsInstanceValid(f.HipJoint))
             f.HipJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint,
                 crouching ? _crouchHipAngle : 0f);
+        // Ankle compensation: dorsiflexion (negative angle) has two effects.
+        // Planted foot: ankle torque acts on the shin (foot can't move), rotating it
+        // backward — pulls the knee back over the foot and reduces the forward CoM
+        // shift that bent knees create.  This is the primary geometric anti-tip mechanism.
+        // Swinging foot: affects step target placement, keeping feet from landing too far
+        // forward when the shin is angled.  Both effects use the same equilibrium value.
+        if (GodotObject.IsInstanceValid(f.AnkleJoint))
+            f.AnkleJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint,
+                crouching ? _crouchAnkleAngle : 0f);
     }
 
-    public void SetCrouching(bool crouching, float kneeAngle = 0f, float hipAngle = 0f)
+    public void SetCrouching(bool crouching, float kneeAngle = 0f, float hipAngle = 0f, float ankleAngle = 0f)
     {
         _crouching        = crouching;
         _crouchKneeAngle  = kneeAngle;
         _crouchHipAngle   = hipAngle;
+        _crouchAnkleAngle = ankleAngle;
         // Apply immediately to planted feet — no waiting for next step.
         for (int i = 0; i < 2; i++)
         {
@@ -265,6 +300,26 @@ public partial class FootStepper : Node
         j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
         j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
         j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, s);
+    }
+
+    /// <summary>
+    /// Returns the XZ midpoint of all planted foot targets, or null if no feet are planted.
+    /// Used by BalanceController to compute the lean error for CoM recovery.
+    /// Uses Target (stable reference) rather than Body.GlobalPosition (noisy physics).
+    /// </summary>
+    public Vector3? GetSupportCenter()
+    {
+        var sum   = Vector3.Zero;
+        var count = 0;
+        for (int i = 0; i < 2; i++)
+        {
+            if (_feet[i].State == FootState.Planted && GodotObject.IsInstanceValid(_feet[i].Body))
+            {
+                sum += _feet[i].Target;
+                count++;
+            }
+        }
+        return count > 0 ? sum / count : null;
     }
 
     private float ComputeGroundY()
