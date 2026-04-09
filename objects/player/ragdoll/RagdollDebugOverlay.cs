@@ -11,6 +11,10 @@ namespace godototype.objects.player.ragdoll;
 ///   • Yellow flat circle   — CoM footprint on ground plane
 ///   • Cyan line            — anchor "desired up" (what the balance spring is pulling toward)
 ///   • White line           — actual torso up vector
+///   • Cornflower blue bar  — hip-width pole (hip joint attachment points on lTorso)
+///   •   ↳ crossbar         — current hip height on posture pole
+///   • Violet bar           — shoulder-width pole (shoulder joint attachment points on uTorso)
+///   •   ↳ crossbar         — current shoulder height on posture pole
 ///
 /// Toggle: F3  OR  console command `debug [on|off|toggle]`
 /// </summary>
@@ -29,13 +33,24 @@ public partial class RagdollDebugOverlay : Node3D
     private BalanceController          _balance;
     private FootStepper                _stepper;
 
+    // Shoulder/hip pole endpoints stored in torso-local space so they track
+    // the torso rotation without inheriting noise from swinging limbs.
+    private Vector3 _lShoulderLocal;
+    private Vector3 _rShoulderLocal;
+    private Vector3 _lHipLocal;
+    private Vector3 _rHipLocal;
+
     public void Setup(
         IReadOnlyList<RigidBody3D> bodies,
         RigidBody3D                lTorso,
         RigidBody3D                uTorso,
         RigidBody3D                head,
         BalanceController          balance,
-        FootStepper                stepper = null)
+        FootStepper                stepper       = null,
+        RigidBody3D                lShoulderBody = null,
+        RigidBody3D                rShoulderBody = null,
+        RigidBody3D                lHipBody      = null,
+        RigidBody3D                rHipBody      = null)
     {
         _bodies  = bodies;
         _lTorso  = lTorso;
@@ -43,6 +58,21 @@ public partial class RagdollDebugOverlay : Node3D
         _head    = head;
         _balance = balance;
         _stepper = stepper;
+
+        // Bake attachment points into torso-local space so the poles track
+        // the torso frame and stay immune to limb wobble.
+        if (uTorso != null && lShoulderBody != null && rShoulderBody != null)
+        {
+            var inv = uTorso.GlobalTransform.AffineInverse();
+            _lShoulderLocal = inv * lShoulderBody.GlobalPosition;
+            _rShoulderLocal = inv * rShoulderBody.GlobalPosition;
+        }
+        if (lTorso != null && lHipBody != null && rHipBody != null)
+        {
+            var inv = lTorso.GlobalTransform.AffineInverse();
+            _lHipLocal = inv * lHipBody.GlobalPosition;
+            _rHipLocal = inv * rHipBody.GlobalPosition;
+        }
     }
 
     public override void _Ready()
@@ -140,6 +170,17 @@ public partial class RagdollDebugOverlay : Node3D
             DrawLine(_lTorso.GlobalPosition, _lTorso.GlobalPosition + up * 0.4f);
         }
 
+        // ── Hip / shoulder pole endpoints (hoisted so posture pole can use them) ─
+        var haveHips = _lTorso != null && GodotObject.IsInstanceValid(_lTorso)
+                       && _lHipLocal != Vector3.Zero && _rHipLocal != Vector3.Zero;
+        var haveShoulders = _uTorso != null && GodotObject.IsInstanceValid(_uTorso)
+                            && _lShoulderLocal != Vector3.Zero && _rShoulderLocal != Vector3.Zero;
+
+        var lHip      = haveHips      ? _lTorso.GlobalTransform * _lHipLocal      : Vector3.Zero;
+        var rHip      = haveHips      ? _lTorso.GlobalTransform * _rHipLocal      : Vector3.Zero;
+        var lShoulder = haveShoulders ? _uTorso.GlobalTransform * _lShoulderLocal : Vector3.Zero;
+        var rShoulder = haveShoulders ? _uTorso.GlobalTransform * _rShoulderLocal : Vector3.Zero;
+
         // ── Posture pole ──────────────────────────────────────────────────────
         // Orange vertical axis: the ideal alignment line rising from the foot
         // midpoint. A well-postured body keeps hips, spine, and head stacked
@@ -168,6 +209,56 @@ public partial class RagdollDebugOverlay : Node3D
             // Head — white
             if (_head != null && GodotObject.IsInstanceValid(_head))
                 DrawLandmarkToPole(_head, footMid, Colors.White);
+
+            // Facing axes for crossbar orientation — rotate with the character.
+            // AnchorRight tracks yaw input via _anchorRestBasis; fall back to world
+            // axes if no balance controller is present.
+            var charRight   = _balance != null ? _balance.AnchorRight : Vector3.Right;
+            var charForward = Vector3.Up.Cross(charRight).Normalized();
+
+            // ── Desired hip height on posture pole ───────────────────────────
+            // Horizontal crossbar at the current hip midpoint height — shows
+            // where the hips sit on the ideal axis so lean/sag is immediately obvious.
+            if (haveHips)
+            {
+                var hipY = new Vector3(footMid.X, (lHip.Y + rHip.Y) * 0.5f, footMid.Z);
+                Col(new Color(0.27f, 0.51f, 0.93f)); // cornflower blue — matches hip pole
+                DrawLine(hipY - charRight   * 0.12f, hipY + charRight   * 0.12f);
+                DrawLine(hipY - charForward * 0.12f, hipY + charForward * 0.12f);
+            }
+
+            // ── Desired shoulder height on posture pole ───────────────────────
+            // Same crossbar at shoulder midpoint height.
+            if (haveShoulders)
+            {
+                var shoulderY = new Vector3(footMid.X, (lShoulder.Y + rShoulder.Y) * 0.5f, footMid.Z);
+                Col(new Color(0.65f, 0.15f, 1f)); // violet — matches shoulder pole
+                DrawLine(shoulderY - charRight   * 0.12f, shoulderY + charRight   * 0.12f);
+                DrawLine(shoulderY - charForward * 0.12f, shoulderY + charForward * 0.12f);
+            }
+        }
+
+        // ── Hip pole ──────────────────────────────────────────────────────────
+        // Cornflower blue: spans the two hip attachment points baked onto lTorso.
+        // Because endpoints are stored in lTorso-local space they stay anchored to
+        // the spine and are unaffected by leg swing.
+        if (haveHips)
+        {
+            Col(new Color(0.27f, 0.51f, 0.93f)); // cornflower blue
+            DrawWireSphere(lHip, 0.03f, 6);
+            DrawWireSphere(rHip, 0.03f, 6);
+            DrawLine(lHip, rHip);
+        }
+
+        // ── Shoulder pole ─────────────────────────────────────────────────────
+        // Violet: spans the two shoulder attachment points baked onto uTorso.
+        // Same torso-local anchoring keeps this stable despite arm movement.
+        if (haveShoulders)
+        {
+            Col(new Color(0.65f, 0.15f, 1f)); // violet
+            DrawWireSphere(lShoulder, 0.03f, 6);
+            DrawWireSphere(rShoulder, 0.03f, 6);
+            DrawLine(lShoulder, rShoulder);
         }
 
         // ── Foot targets ─────────────────────────────────────────────────────

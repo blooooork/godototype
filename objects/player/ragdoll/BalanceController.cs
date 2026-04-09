@@ -144,6 +144,13 @@ public partial class BalanceController : Node, IBalanceable
         : Vector3.Up;
 
     /// <summary>
+    /// Character's current right axis in world space, updated each physics tick as
+    /// yaw input accumulates into _anchorRestBasis. Use this to orient width-wise
+    /// visualisations (e.g. shoulder/hip crossbars) so they rotate with the character.
+    /// </summary>
+    public Vector3 AnchorRight => _anchorRestBasis.Y;
+
+    /// <summary>
     /// Current lean angle (radians) in the movement direction. Zero when idle.
     /// Drive spine joint equilibria by a fraction of this to couple the upper body to balance.
     /// </summary>

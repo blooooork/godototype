@@ -588,7 +588,8 @@ public partial class RagdollCharacter : Node3D, IResettable
         }
 
         GetNodeOrNull<RagdollDebugOverlay>("DebugOverlay")
-            ?.Setup(_bodies[BodyGroup.All], _lTorso, _uTorso, _head, _balanceController, _footStepper);
+            ?.Setup(_bodies[BodyGroup.All], _lTorso, _uTorso, _head, _balanceController, _footStepper,
+                    _lShoulderBody, _rShoulderBody, _lHipBody, _rHipBody);
 
         // Now that _uTorso is resolved, point the camera at it.
         // VirtualCamera._Process will lerp toward _uTorso.GlobalPosition each render frame.
