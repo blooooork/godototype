@@ -102,11 +102,11 @@ transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -
 Anchor = NodePath("../Torso/Segment0")
 
 [node name="RightLeg" parent="." unique_id=1168917906 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 0.2, -0.43, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.43, 0)
 Anchor = NodePath("../Torso/Segment2")
 
 [node name="LeftLeg" parent="." unique_id=945177328 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
-transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -0.2, -0.43878594, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, -0.43878594, 0)
 Anchor = NodePath("../Torso/Segment2")
 
 [node name="BalanceController" type="Node" parent="." unique_id=618791085]

@@ -85,6 +85,11 @@ public partial class RagdollSettings : Resource
     //              the straight-ahead shuffle stops curving.
     [Export] public float YawDamping { get; set; } = 5f;
 
+    // How much the spine joints follow the balance lean direction.
+    // 0 = rigid column, 1 = spine fully matches the lean angle.
+    // Distributed evenly across all spine joints so total lean = LeanAngle × this value.
+    [Export] public float SpineLeanFactor { get; set; } = 0.4f;
+
     // Tilt angle (degrees) at which the character gives up and ragdolls.
     [Export] public float StumbleAngle { get; set; } = 55f;
 
@@ -165,4 +170,23 @@ public partial class RagdollSettings : Resource
     // Combine with YawDamping (under Balance) — that value is the controller
     // gain: torque = YawDamping × (desiredYawVel − currentYawVel).
     [Export] public float TurnMaxSpeed { get; set; } = 90f;
+
+    // ── Crouch ────────────────────────────────────────────────────────────────
+    [ExportGroup("Crouch")]
+
+    // Spring stiffness applied to the entire upper body (torso, neck, shoulders) while crouching.
+    // Keeps the spine column stacked and head aligned over the CoM as the hips drop.
+    // Set higher than SpineStiffness to resist forward slump; lower for a more relaxed squat.
+    [Export] public float CrouchBodyStiffness { get; set; } = 20f;
+
+    // Target knee bend angle when crouching (degrees, positive = forward bend).
+    // Practical range: 10°–80°. Higher = deeper squat. The knee spring drives toward
+    // this angle; CrouchKneeStiffness controls how snappily it gets there.
+    [Export] public float CrouchKneeAngle { get; set; } = 40f;
+
+
+    // Hip joint flex angle when crouching (degrees, positive = forward flex same as knee convention).
+    // The hip and knee together geometrically lower the CoM — no downward force needed.
+    // Start around half of CrouchKneeAngle and tune from there.
+    [Export] public float CrouchHipAngle { get; set; } = 20f;
 }

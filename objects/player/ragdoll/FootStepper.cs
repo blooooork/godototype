@@ -56,6 +56,9 @@ public partial class FootStepper : Node
     private RigidBody3D _lTorso;
     private float       _legStiffness;
     private bool        _enabled    = true;
+    private bool        _crouching      = false;
+    private float       _crouchKneeAngle = 0f;
+    private float       _crouchHipAngle  = 0f;
 
     private const int L = 0, R = 1;
 
@@ -192,14 +195,62 @@ public partial class FootStepper : Node
                     f.State    = FootState.Planted;
                     f.Cooldown = StepCooldown;
                     SetLegJointStiffness(ref f, _legStiffness);
+                    // Set joint equilibria for this plant — crouch angles if crouching, 0 if standing.
+                    ApplyCrouchEquilibria(ref f, _crouching);
                     if (StepBounce > 0f)
                         _lTorso.ApplyCentralImpulse(Vector3.Up * StepBounce);
                 }
             }
         }
+
+        // While crouching, keep driving hip and knee toward their target angles every tick
+        // so feet that were swinging when crouch started also get the correct equilibria.
+        if (_crouching)
+        {
+            for (int i = 0; i < 2; i++)
+            {
+                ref var f = ref _feet[i];
+                ApplyCrouchEquilibria(ref f, true);
+            }
+        }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Changes the spring stiffness used on planted legs (e.g. when crouching).
+    /// Swinging legs are unaffected — they stay at 0 until they plant.
+    /// </summary>
+    public void SetLegStiffness(float stiffness)
+    {
+        _legStiffness = stiffness;
+        for (int i = 0; i < 2; i++)
+            if (_feet[i].State == FootState.Planted)
+                SetLegJointStiffness(ref _feet[i], stiffness);
+    }
+
+    private void ApplyCrouchEquilibria(ref Foot f, bool crouching)
+    {
+        if (GodotObject.IsInstanceValid(f.KneeJoint))
+            f.KneeJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint,
+                crouching ? _crouchKneeAngle : 0f);
+        if (GodotObject.IsInstanceValid(f.HipJoint))
+            f.HipJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint,
+                crouching ? _crouchHipAngle : 0f);
+    }
+
+    public void SetCrouching(bool crouching, float kneeAngle = 0f, float hipAngle = 0f)
+    {
+        _crouching        = crouching;
+        _crouchKneeAngle  = kneeAngle;
+        _crouchHipAngle   = hipAngle;
+        // Apply immediately to planted feet — no waiting for next step.
+        for (int i = 0; i < 2; i++)
+        {
+            if (_feet[i].State != FootState.Planted) continue;
+            ApplyCrouchEquilibria(ref _feet[i], crouching);
+        }
+    }
 
     private void SetLegJointStiffness(ref Foot f, float s)
     {

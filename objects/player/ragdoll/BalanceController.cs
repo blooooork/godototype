@@ -127,6 +127,14 @@ public partial class BalanceController : Node, IBalanceable
         ? _anchor.GlobalTransform.Basis.X
         : Vector3.Up;
 
+    /// <summary>
+    /// Current lean angle (radians) in the movement direction. Zero when idle.
+    /// Drive spine joint equilibria by a fraction of this to couple the upper body to balance.
+    /// </summary>
+    public float   LeanAngle { get; private set; }
+    /// <summary>World-space XZ direction the body is leaning toward. Zero when idle.</summary>
+    public Vector3 LeanDir   { get; private set; }
+
     public override void _EnterTree() => BalanceManager.Register(this);
     public override void _ExitTree()  => BalanceManager.Unregister(this);
 
@@ -197,12 +205,17 @@ public partial class BalanceController : Node, IBalanceable
                 var leanAngle = Mathf.Min(_rawInput.Length() * VelocityLean, Mathf.DegToRad(45f));
                 targetBasis   = new Basis(leanAxis, leanAngle) * _anchorRestBasis;
 
+                LeanAngle = leanAngle;
+                LeanDir   = leanDir;
+
                 // Directional force — lean alone is slow, force provides initial momentum.
                 _lTorso.ApplyCentralForce(inputDir * MoveForce);
             }
             else
             {
                 targetBasis = _anchorRestBasis;
+                LeanAngle   = 0f;
+                LeanDir     = Vector3.Zero;
                 // Brake horizontal drift when idle.
                 // Proportional to XZ velocity so it fades as the body stops — no jerk.
                 if (IdleBrakingForce > 0f)

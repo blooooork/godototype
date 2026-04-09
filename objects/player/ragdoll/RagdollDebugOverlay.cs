@@ -24,17 +24,23 @@ public partial class RagdollDebugOverlay : Node3D
 
     private IReadOnlyList<RigidBody3D> _bodies;
     private RigidBody3D                _lTorso;
+    private RigidBody3D                _uTorso;
+    private RigidBody3D                _head;
     private BalanceController          _balance;
     private FootStepper                _stepper;
 
     public void Setup(
         IReadOnlyList<RigidBody3D> bodies,
         RigidBody3D                lTorso,
+        RigidBody3D                uTorso,
+        RigidBody3D                head,
         BalanceController          balance,
         FootStepper                stepper = null)
     {
         _bodies  = bodies;
         _lTorso  = lTorso;
+        _uTorso  = uTorso;
+        _head    = head;
         _balance = balance;
         _stepper = stepper;
     }
@@ -121,6 +127,36 @@ public partial class RagdollDebugOverlay : Node3D
             Col(Colors.White);
             var up = _lTorso.GlobalTransform.Basis.X;
             DrawLine(_lTorso.GlobalPosition, _lTorso.GlobalPosition + up * 0.4f);
+        }
+
+        // ── Posture pole ──────────────────────────────────────────────────────
+        // Orange vertical axis: the ideal alignment line rising from the foot
+        // midpoint. A well-postured body keeps hips, spine, and head stacked
+        // over this line. Deviations show what's pulling out of alignment.
+        if (_stepper != null && _stepper.IsReady &&
+            _lTorso != null && GodotObject.IsInstanceValid(_lTorso))
+        {
+            // Ideal base = midpoint of the two foot targets on the ground.
+            var footMid  = (_stepper.LeftTarget + _stepper.RightTarget) * 0.5f;
+            footMid.Y    = groundY;
+
+            // Pole rises to estimated head height (2 m above ground is plenty).
+            var poleTop  = new Vector3(footMid.X, groundY + 2f, footMid.Z);
+
+            Col(new Color(1f, 0.5f, 0f)); // orange
+            DrawLine(footMid, poleTop);
+
+            // Actual landmark positions — sphere + line to the pole's nearest point.
+            // Hip (lower torso) — red
+            DrawLandmarkToPole(_lTorso, footMid, new Color(1f, 0.2f, 0.2f));
+
+            // Chest (upper torso) — orange-yellow
+            if (_uTorso != null && GodotObject.IsInstanceValid(_uTorso))
+                DrawLandmarkToPole(_uTorso, footMid, new Color(1f, 0.8f, 0f));
+
+            // Head — white
+            if (_head != null && GodotObject.IsInstanceValid(_head))
+                DrawLandmarkToPole(_head, footMid, Colors.White);
         }
 
         // ── Foot targets ─────────────────────────────────────────────────────
@@ -219,6 +255,17 @@ public partial class RagdollDebugOverlay : Node3D
             1 => new Vector3(c, 0f, s),
             _ => new Vector3(0f, c, s),
         };
+    }
+
+    /// Draws a small sphere at the body's position and a horizontal line to the
+    /// nearest point on the ideal vertical pole, showing XZ deviation.
+    private void DrawLandmarkToPole(RigidBody3D body, Vector3 poleBase, Color c)
+    {
+        var pos      = body.GlobalPosition;
+        var onPole   = new Vector3(poleBase.X, pos.Y, poleBase.Z);
+        Col(c);
+        DrawWireSphere(pos, 0.05f, 8);
+        DrawLine(pos, onPole); // horizontal deviation from ideal axis
     }
 
     private void DrawCross(Vector3 center, float size)

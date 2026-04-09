@@ -317,10 +317,10 @@ public partial class RagdollCharacter : Node3D, IResettable
         // balance spring has something to work with. Without it, hip joints flop freely
         // and the character collapses regardless of torso balance.
         Cfg(_leftHip,    S.LegStiffness, ld,  -90f,  90f,  -30f, 30f,  -45f,  45f);
-        Cfg(_leftKnee,   S.LegStiffness, ld, -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_leftKnee,   S.LegStiffness, ld,   -5f, 130f,    0f,  0f,    0f,   0f);
         Cfg(_leftAnkle,  S.LegStiffness, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
         Cfg(_rightHip,   S.LegStiffness, ld,  -90f,  90f,  -30f, 30f,  -45f,  45f);
-        Cfg(_rightKnee,  S.LegStiffness, ld, -130f,   5f,    0f,  0f,    0f,   0f);
+        Cfg(_rightKnee,  S.LegStiffness, ld,   -5f, 130f,    0f,  0f,    0f,   0f);
         Cfg(_rightAnkle, S.LegStiffness, ed,  -30f,  30f,    0f,  0f,  -15f,  15f);
 
         // Body-level angular damp — applied by physics engine before constraint solving,
@@ -345,7 +345,31 @@ public partial class RagdollCharacter : Node3D, IResettable
 
     private void Crouch(bool crouching)
     {
-        // TODO: implement crouch
+        // Knees
+        _footStepper?.SetCrouching(crouching,
+            Mathf.DegToRad(S.CrouchKneeAngle),
+            Mathf.DegToRad(S.CrouchHipAngle));
+
+        // Stiffen spine and neck to keep the column stacked — shoulders are excluded
+        // because their equilibrium is the T-pose rest position and stiffening them
+        // snaps the arms out.
+        var spineStiff = crouching ? S.CrouchBodyStiffness : S.SpineStiffness;
+        var neckStiff  = crouching ? S.CrouchBodyStiffness : S.HeadStiffness;
+
+        foreach (var j in _torsoJoints ?? [])
+        {
+            if (!IsInstanceValid(j)) continue;
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiff);
+            j.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiff);
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, spineStiff);
+        }
+        if (IsInstanceValid(_neckJoint))
+        {
+            _neckJoint.SetParamX(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiff);
+            _neckJoint.SetParamY(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiff);
+            _neckJoint.SetParamZ(Generic6DofJoint3D.Param.AngularSpringStiffness, neckStiff);
+        }
+
     }
 
     // SetTPose(true)  = Ctrl held: snap all joints toward spawn/T-pose by cranking stiffness.
@@ -446,6 +470,39 @@ public partial class RagdollCharacter : Node3D, IResettable
         _balanceController?.SetInputDir(Vector2.Zero);
     }
 
+    public override void _PhysicsProcess(double delta)
+    {
+        if (!_isActive || _balanceController == null || _torsoJoints == null || _lTorso == null) return;
+
+        var leanAngle = _balanceController.LeanAngle;
+        var leanDir   = _balanceController.LeanDir;
+
+        if (_torsoJoints.Length == 0) return;
+        var perJoint = S.SpineLeanFactor / _torsoJoints.Length;
+
+        // Decompose world-space lean direction into character-local forward and right components.
+        // Spine Z equilibrium = forward/backward bend, X = side bend.
+        var rawRight  = _lTorso.GlobalTransform.Basis.Y;
+        var rightFlat = new Vector3(rawRight.X, 0f, rawRight.Z);
+        var fwdLean   = 0f;
+        var sideLean  = 0f;
+        if (leanAngle > 0.001f && rightFlat.LengthSquared() > 0.01f)
+        {
+            rightFlat = rightFlat.Normalized();
+            var fwdFlat = rightFlat.Cross(Vector3.Up);
+            fwdLean  = leanDir.Dot(fwdFlat)  * leanAngle * perJoint;
+            sideLean = leanDir.Dot(rightFlat) * leanAngle * perJoint;
+        }
+
+        foreach (var j in _torsoJoints)
+        {
+            if (!IsInstanceValid(j)) continue;
+            j.SetParamZ(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, fwdLean);
+            j.SetParamX(Generic6DofJoint3D.Param.AngularSpringEquilibriumPoint, sideLean);
+        }
+
+    }
+
     private void UpdateInputDir()
     {
         var vec = InputManager.GetVector(
@@ -528,7 +585,7 @@ public partial class RagdollCharacter : Node3D, IResettable
         }
 
         GetNodeOrNull<RagdollDebugOverlay>("DebugOverlay")
-            ?.Setup(_bodies[BodyGroup.All], _lTorso, _balanceController, _footStepper);
+            ?.Setup(_bodies[BodyGroup.All], _lTorso, _uTorso, _head, _balanceController, _footStepper);
 
         // Now that _uTorso is resolved, point the camera at it.
         // VirtualCamera._Process will lerp toward _uTorso.GlobalPosition each render frame.
