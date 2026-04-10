@@ -9,6 +9,7 @@ namespace godototype.objects.player.ragdoll;
 ///   • Yellow sphere/cross  — centre of mass
 ///   • Yellow dashed line   — CoM projected down to ground
 ///   • Yellow flat circle   — CoM footprint on ground plane
+///   • Blue-violet arrow    — input direction (complement of lime; fixed 0.3 m length)
 ///   • Cyan line            — anchor "desired up" (what the balance spring is pulling toward)
 ///   • White line           — actual torso up vector
 ///   • Cornflower blue bar  — hip-width pole (hip joint attachment points on lTorso)
@@ -135,6 +136,21 @@ public partial class RagdollDebugOverlay : Node3D
         {
             Col(new Color(0.5f, 1f, 0.1f)); // lime — distinct from cyan anchor, orange posture, green feet
             DrawArrow(com, velXZ, velXZ.Length() * 0.2f);
+        }
+
+        // ── Input direction arrow ─────────────────────────────────────────────
+        // Complement of lime (0.5, 0, 0.9) — blue-violet, visually opposite.
+        // Fixed length (0.3 m) so it reads as intent rather than magnitude.
+        // Drawn from the same CoM origin as the momentum arrow so the two can
+        // be directly compared: gap = slip, overlap = committed movement.
+        if (_balance != null)
+        {
+            var inputDir = _balance.WorldInputDir;
+            if (inputDir.LengthSquared() > 0.0001f)
+            {
+                Col(new Color(0.5f, 0f, 0.9f)); // blue-violet — complement of lime
+                DrawArrow(com, inputDir, 0.3f);
+            }
         }
 
         // ── CoM sphere + ground projection ───────────────────────────────────

@@ -151,6 +151,27 @@ public partial class BalanceController : Node, IBalanceable
     public Vector3 AnchorRight => _anchorRestBasis.Y;
 
     /// <summary>
+    /// Current movement-input direction in world space (XZ plane, unit length when input is
+    /// held, Vector3.Zero when idle). Uses the same anchor-basis conversion as ApplyBalance so
+    /// it rotates immediately with yaw input rather than waiting for physics to catch up.
+    /// </summary>
+    public Vector3 WorldInputDir
+    {
+        get
+        {
+            if (_rawInput.LengthSquared() <= 0.0001f) return Vector3.Zero;
+            var anchorRight = _anchorRestBasis.Y;
+            var rightFlat   = new Vector3(anchorRight.X, 0f, anchorRight.Z);
+            if (rightFlat.LengthSquared() <= 0.01f)
+                return new Vector3(-_rawInput.Y, 0f, _rawInput.X).Normalized();
+            rightFlat    = rightFlat.Normalized();
+            var fwdFlat  = rightFlat.Cross(Vector3.Up);
+            var rightDir = fwdFlat.Cross(Vector3.Up);
+            return (fwdFlat * (-_rawInput.Y) + rightDir * _rawInput.X).Normalized();
+        }
+    }
+
+    /// <summary>
     /// Current lean angle (radians) in the movement direction. Zero when idle.
     /// Drive spine joint equilibria by a fraction of this to couple the upper body to balance.
     /// </summary>
