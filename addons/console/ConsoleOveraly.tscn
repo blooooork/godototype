@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://ddjr0s7mcf80h"]
+
+[ext_resource type="Script" uid="uid://cf52tgykpyi0c" path="res://addons/console/ConsoleOverlay.cs" id="1_2sra6"]
+
+[node name="ConsoleOveraly" type="CanvasLayer" unique_id=625296340]
+script = ExtResource("1_2sra6")
+FocusedStats = true

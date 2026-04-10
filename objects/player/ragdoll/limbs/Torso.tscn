@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://d3vg0vpe0omtc"]
+
+[ext_resource type="Script" uid="uid://h2f72iqbi0jg" path="res://objects/player/ragdoll/limbs/Torso.cs" id="1_v0nfg"]
+
+[node name="Torso" type="Node3D" unique_id=695377178]
+script = ExtResource("1_v0nfg")

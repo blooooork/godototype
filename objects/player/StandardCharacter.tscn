@@ -1,0 +1,29 @@
+[gd_scene format=3 uid="uid://dhcwedkusdl74"]
+
+[ext_resource type="Script" uid="uid://ctu7is1akcphl" path="res://objects/player/StandardCharacter.cs" id="1_26nge"]
+[ext_resource type="PackedScene" uid="uid://boi2v6mx55n65" path="res://blendporter/pawn/chucker.tscn" id="1_ng75y"]
+[ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="2_nt7tb"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nt7tb"]
+albedo_color = Color(0, 1, 1, 1)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_nt7tb"]
+radius = 1.1
+height = 3.4
+
+[node name="StandardCharacter" type="CharacterBody3D" unique_id=1419094835]
+script = ExtResource("1_26nge")
+
+[node name="chucker" parent="." unique_id=1705303431 instance=ExtResource("1_ng75y")]
+
+[node name="body" parent="chucker" index="0" unique_id=1340796062]
+surface_material_override/0 = SubResource("StandardMaterial3D_nt7tb")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=39434361]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("CapsuleShape3D_nt7tb")
+
+[node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_nt7tb")]
+transform = Transform3D(1, 0, 0, 0, 0.9659258, 0.25881907, 0, -0.25881907, 0.9659258, 0, 3.825977, 5.5)
+
+[editable path="chucker"]

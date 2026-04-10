@@ -1,7 +1,0 @@
-[gd_scene format=3 uid="uid://drd5ehqiglvmi"]
-
-[ext_resource type="PackedScene" uid="uid://b6difo8c1yd0f" path="res://raw_assets/pipeline_test.blend" id="1_2gju5"]
-
-[node name="TestScene" type="Node3D" unique_id=2146333783]
-
-[node name="pipeline_test" parent="." unique_id=1263770715 instance=ExtResource("1_2gju5")]

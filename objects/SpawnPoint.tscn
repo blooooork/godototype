@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://cg2160566qqkh"]
+
+[ext_resource type="Script" uid="uid://bkvlmoqmqsg5p" path="res://objects/SpawnPoint.cs" id="1_b2mqg"]
+[ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="2_kl1y4"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_kl1y4"]
+inner_radius = 0.7
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_c8g4j"]
+albedo_color = Color(0, 0.9833336, 1, 0.6627451)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_spawn"]
+
+[node name="SpawnPoint" type="Node3D" unique_id=1910422569]
+script = ExtResource("1_b2mqg")
+
+[node name="Outline" type="MeshInstance3D" parent="." unique_id=968449376]
+transform = Transform3D(1, 0, 0, 0, 0.02, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("TorusMesh_kl1y4")
+surface_material_override/0 = SubResource("StandardMaterial3D_c8g4j")
+
+[node name="SpawnDetect" type="Area3D" parent="." unique_id=123456789]
+monitoring = false
+monitorable = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="SpawnDetect" unique_id=987654321]
+shape = SubResource("BoxShape3D_spawn")
+
+[node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_kl1y4")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 0.99999994, 0, 0, 0)

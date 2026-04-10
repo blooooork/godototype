@@ -1,0 +1,122 @@
+[gd_scene format=3 uid="uid://d276sd51losjc"]
+
+[ext_resource type="Script" uid="uid://8q82ps5y4qgb" path="res://objects/player/ragdoll/RagdollCharacter.cs" id="1_6awg3"]
+[ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="1_qndj1"]
+[ext_resource type="PackedScene" uid="uid://c130pl5r5spoc" path="res://objects/player/ragdoll/limbs/Head.tscn" id="2_hmmqc"]
+[ext_resource type="Resource" uid="uid://cx5sj2imxy4h1" path="res://objects/player/ragdoll/strides/StandardStride.tres" id="2_i6eow"]
+[ext_resource type="PackedScene" uid="uid://d3vg0vpe0omtc" path="res://objects/player/ragdoll/limbs/Torso.tscn" id="4_aaawk"]
+[ext_resource type="PackedScene" uid="uid://c11ctfan6g5iu" path="res://objects/player/ragdoll/limbs/Arm.tscn" id="6_tw8h2"]
+[ext_resource type="PackedScene" uid="uid://c14jtdoao3dah" path="res://objects/player/ragdoll/limbs/Leg.tscn" id="7_ns8cp"]
+[ext_resource type="Script" uid="uid://to6rapf4ird" path="res://objects/player/ragdoll/BalanceController.cs" id="8_balctrl"]
+[ext_resource type="Script" uid="uid://dsk4jjsok1wdy" path="res://objects/player/ragdoll/RagdollDebugOverlay.cs" id="9_dbgovl"]
+[ext_resource type="Script" uid="uid://gsy52aopwdej" path="res://objects/player/ragdoll/FootStepper.cs" id="10_ftstep"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_i6eow"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_yobyq"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_lyqat"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_1vdsp"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_20w8a"]
+radius = 0.15
+height = 0.5
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_il825"]
+radius = 0.15
+height = 0.5
+
+[node name="RagdollCharacter" type="Node3D" unique_id=385904974]
+script = ExtResource("1_6awg3")
+Settings = ExtResource("2_i6eow")
+
+[node name="Camera" parent="." unique_id=1586058199 instance=ExtResource("1_qndj1")]
+
+[node name="CameraContainer" parent="Camera" index="0" unique_id=2406803]
+transform = Transform3D(1, 0, 0, 0, 0.9659255, 0.25881895, 0, -0.25881895, 0.9659255, 0, 3, 5)
+
+[node name="Head" parent="." unique_id=2063455393 node_paths=PackedStringArray("Anchor") instance=ExtResource("2_hmmqc")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.756, -0.012)
+Anchor = NodePath("../Torso/Segment0")
+
+[node name="Torso" parent="." unique_id=695377178 instance=ExtResource("4_aaawk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.118, -0.018)
+SegmentWidth = 0.5
+SegmentSpacing = 0.2
+
+[node name="Segment0" type="RigidBody3D" parent="Torso" unique_id=1709882624]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0.2, 0)
+mass = 0.33333334
+
+[node name="Segment0Col" type="CollisionShape3D" parent="Torso/Segment0" unique_id=998262334]
+shape = SubResource("CapsuleShape3D_i6eow")
+
+[node name="Segment0Mesh" type="MeshInstance3D" parent="Torso/Segment0" unique_id=1774280116]
+mesh = SubResource("CapsuleMesh_yobyq")
+
+[node name="Segment1" type="RigidBody3D" parent="Torso" unique_id=1088368304]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0)
+mass = 0.33333334
+
+[node name="Segment1Col" type="CollisionShape3D" parent="Torso/Segment1" unique_id=1936746306]
+shape = SubResource("CapsuleShape3D_lyqat")
+
+[node name="Segment1Mesh" type="MeshInstance3D" parent="Torso/Segment1" unique_id=822870555]
+mesh = SubResource("CapsuleMesh_1vdsp")
+
+[node name="Segment2" type="RigidBody3D" parent="Torso" unique_id=1549057748]
+transform = Transform3D(0, -1, 0, 1, 0, 0, 0, 0, 1, 0, -0.2, 0)
+mass = 0.33333334
+
+[node name="Segment2Col" type="CollisionShape3D" parent="Torso/Segment2" unique_id=329248352]
+shape = SubResource("CapsuleShape3D_20w8a")
+
+[node name="Segment2Mesh" type="MeshInstance3D" parent="Torso/Segment2" unique_id=732869121]
+mesh = SubResource("CapsuleMesh_il825")
+
+[node name="Joint0_1" type="Generic6DOFJoint3D" parent="Torso" unique_id=1225603397]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 0)
+node_a = NodePath("../Segment0")
+node_b = NodePath("../Segment1")
+
+[node name="Joint1_2" type="Generic6DOFJoint3D" parent="Torso" unique_id=2101667313]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+node_a = NodePath("../Segment1")
+node_b = NodePath("../Segment2")
+
+[node name="RightArm" parent="." unique_id=1017599828 node_paths=PackedStringArray("Anchor") instance=ExtResource("6_tw8h2")]
+transform = Transform3D(-4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0, 1, 0.671, 0.405, -0.004)
+Anchor = NodePath("../Torso/Segment0")
+
+[node name="LeftArm" parent="." unique_id=1502921071 node_paths=PackedStringArray("Anchor") instance=ExtResource("6_tw8h2")]
+transform = Transform3D(-4.371139e-08, 1, -4.371139e-08, 0, -4.371139e-08, -1, -1, -4.371139e-08, 1.9106855e-15, -0.6705066, 0.40484935, -0.004)
+Anchor = NodePath("../Torso/Segment0")
+
+[node name="RightLeg" parent="." unique_id=1168917906 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.2, -0.43, 0)
+Anchor = NodePath("../Torso/Segment2")
+
+[node name="LeftLeg" parent="." unique_id=945177328 node_paths=PackedStringArray("Anchor") instance=ExtResource("7_ns8cp")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.2, -0.43878594, 0)
+Anchor = NodePath("../Torso/Segment2")
+
+[node name="BalanceController" type="Node" parent="." unique_id=618791085]
+script = ExtResource("8_balctrl")
+
+[node name="FootStepper" type="Node" parent="." unique_id=223344556]
+script = ExtResource("10_ftstep")
+
+[node name="DebugOverlay" type="Node3D" parent="." unique_id=112233445]
+script = ExtResource("9_dbgovl")
+Enabled = true
+
+[editable path="Camera"]

@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://71uy04qb1qgu"]
+
+[ext_resource type="Script" uid="uid://brfkturdmlbyu" path="res://objects/player/RigidCharacter.cs" id="1_6v7kc"]
+[ext_resource type="Script" uid="uid://b9ctrl8r4d2m1k" path="res://objects/player/RigidBodyController.cs" id="3_ctrl1"]
+[ext_resource type="PackedScene" uid="uid://boi2v6mx55n65" path="res://blendporter/pawn/chucker.tscn" id="1_ckg3v"]
+[ext_resource type="PackedScene" uid="uid://ccsxgxamw6rrt" path="res://camera/VirtualCamera.tscn" id="2_ch7lj"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_ch7lj"]
+radius = 1.0
+
+[node name="RigidCharacter" type="RigidBody3D" unique_id=1090153355]
+angular_damp = 2.0
+script = ExtResource("1_6v7kc")
+
+[node name="RigidBodyController" type="Node" parent="." unique_id=1090153356]
+script = ExtResource("3_ctrl1")
+MaxSpeed = 7.0
+
+[node name="chucker" parent="." unique_id=1705303431 instance=ExtResource("1_ckg3v")]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=559244608]
+shape = SubResource("SphereShape3D_ch7lj")
+
+[node name="VirtualCamera" parent="." unique_id=489467468 instance=ExtResource("2_ch7lj")]
+top_level = true
+CameraOffset = Vector3(0, 3, 10)
+
+[node name="GroundRayFront" type="RayCast3D" parent="." unique_id=60740094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, 0.5)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
+
+[node name="GroundRayRight" type="RayCast3D" parent="." unique_id=1946728079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.759, 0.07, 0)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
+
+[node name="GroundRayLeft" type="RayCast3D" parent="." unique_id=333372573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.75, 0.07, 0)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
+
+[node name="GroundRayBack" type="RayCast3D" parent="." unique_id=2123191164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.07, -0.5)
+target_position = Vector3(0, -1.2, 0)
+collide_with_areas = true
