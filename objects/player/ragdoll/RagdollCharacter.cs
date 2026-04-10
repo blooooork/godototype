@@ -32,11 +32,12 @@ public partial class RagdollCharacter : Node3D, IResettable
     private Dictionary<RigidBody3D, Transform3D> _restTransforms;
     private Dictionary<RigidBody3D, Transform3D> _restOffsets;
 
-    private IVirtualCamera    _camera;
-    private Node3D            _cameraNode;
-    private CameraClaim       _cameraClaim;
-    private BalanceController _balanceController;
-    private FootStepper       _footStepper;
+    private IVirtualCamera         _camera;
+    private Node3D                 _cameraNode;
+    private CameraClaim            _cameraClaim;
+    private BalanceController      _balanceController;
+    private FootStepper            _footStepper;
+    private SpinePostureController _spinePosture;
 
     // Whether BalanceController + IK are actively running.
     // False = full ragdoll — physics only, no active systems.
@@ -440,9 +441,15 @@ public partial class RagdollCharacter : Node3D, IResettable
         }
 
         if (snapToTPose)
+        {
             _balanceController?.Disable();
+            _spinePosture?.SetActive(false);
+        }
         else
+        {
             _balanceController?.Enable();
+            _spinePosture?.SetActive(true);
+        }
     }
 
     public void Reset(Transform3D spawnTransform)
@@ -556,6 +563,18 @@ public partial class RagdollCharacter : Node3D, IResettable
         }
         _balanceController?.Init(_lTorso, _uTorso, _footStepper);
         _balanceController?.SetBodies(_bodies[BodyGroup.All]);
+
+        // Spine posture controller — must come after BalanceController.Init so AnchorRight is valid.
+        // Only created when a balance controller exists; it needs AnchorRight for shoulder leveling.
+        if (_balanceController != null)
+        {
+            _spinePosture = new SpinePostureController { Name = "SpinePostureController" };
+            AddChild(_spinePosture);
+            _spinePosture.Init(
+                _lTorso, _mTorso, _uTorso, _balanceController,
+                S.PostureStrength,       S.PostureDamping,
+                S.ShoulderLevelStrength, S.ShoulderLevelDamping);
+        }
 
         // Balance bodies: torso segments only. Including head/arms causes yaw instability —
         // damping their asymmetric limb angular velocities injects torque through the joints

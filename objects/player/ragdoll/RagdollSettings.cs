@@ -124,6 +124,40 @@ public partial class RagdollSettings : Resource
     [Export] public float LeanRestoreDamping { get; set; } = 5f;
 
 
+    // ── Posture ───────────────────────────────────────────────────────────────
+    [ExportGroup("Posture")]
+
+    // Stiffness of the spine stacking PD springs (mTorso tracks lTorso, uTorso tracks mTorso).
+    // Creates a coherent spine column that follows balance lean without per-segment tuning.
+    //
+    // Must be LOWER than UprightStiffness (default 30) — the balance spring is the primary
+    // upright anchor; this is a softer secondary pull that stacks the segments above it.
+    // Typical range: 8–20. Raise for a more rigid, "soldier" posture; lower for a loose,
+    // natural sway. Above ~25 the spine starts to feel stiff and fights the physics.
+    [Export] public float PostureStrength { get; set; } = 15f;
+
+    // Damping on the spine stacking PD controllers.
+    // Resists oscillation as segments track each other after an impact or rapid movement.
+    // Keep LOW — TorsoAngularDamp (default 8) already handles most velocity damping at the
+    // body level. Stacking PostureDamping on top risks over-damping the spine and killing
+    // the sense of physical weight. Typical range: 1–4, roughly PostureStrength / 6.
+    [Export] public float PostureDamping { get; set; } = 2f;
+
+    // Stiffness of the shoulder leveling torque applied to the upper torso.
+    // Zeroes the roll (sideways tilt) of the shoulder girdle so the violet debug crossbar
+    // stays horizontal. This is a cosmetic correction layered on top of the stacking spring,
+    // not a structural one — it should NOT fight the stacking spring.
+    //
+    // Must be LOWER than PostureStrength. Too high causes the upper torso to snap upright
+    // and resist lateral impacts unnaturally. Typical range: 4–12.
+    [Export] public float ShoulderLevelStrength { get; set; } = 8f;
+
+    // Damping on the shoulder leveling roll correction.
+    // Prevents the shoulder girdle from oscillating after an impact tilts it sideways.
+    // Match PostureDamping for consistent feel across both spine behaviours.
+    // Typical range: 1–4.
+    [Export] public float ShoulderLevelDamping { get; set; } = 2f;
+
     // ── Stepping ──────────────────────────────────────────────────────────────
     [ExportGroup("Stepping")]
 
