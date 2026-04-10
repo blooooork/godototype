@@ -34,6 +34,10 @@ public partial class FootStepper : Node
     public float FootSpringDamp  { get; set; } = 10f;
     public float PlantTolerance { get; set; } = 0.10f;
     public float StepCooldown   { get; set; } = 0.20f;
+    // Fraction of the step drive force's yaw component to cancel on the torso (0 = off, 1 = full).
+    // Counteracts spin injected when the hip joint transmits leg swing forces to the torso.
+    // Tune: 0 has no effect; raise toward 1 until straight-line drift stops; back off if it over-corrects.
+    public float StepYawCancel  { get; set; } = 0.5f;
 
     // ── Internal ─────────────────────────────────────────────────────────────
 
@@ -55,6 +59,8 @@ public partial class FootStepper : Node
     private Foot[]      _feet       = new Foot[2];
     private RigidBody3D _lTorso;
     private float       _legStiffness;
+    private Vector3     _comPos;       // mass-weighted CoM fed in from BalanceController
+    private Vector3     _comVel;       // mass-weighted CoM velocity
     private bool        _enabled    = true;
     private bool        _crouching       = false;
     private float       _crouchKneeAngle = 0f;
@@ -87,6 +93,17 @@ public partial class FootStepper : Node
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
+    /// <summary>
+    /// Called each physics tick by BalanceController with the true mass-weighted CoM.
+    /// Used for capture-point calculation so foot targets are based on the whole body,
+    /// not just the lower torso.
+    /// </summary>
+    public void UpdateCoM(Vector3 comPos, Vector3 comVel)
+    {
+        _comPos = comPos;
+        _comVel = comVel;
+    }
+
     public void Setup(
         RigidBody3D lTorso,
         RigidBody3D lFoot,       RigidBody3D rFoot,
@@ -99,6 +116,8 @@ public partial class FootStepper : Node
     {
         _lTorso       = lTorso;
         _legStiffness = legStiffness;
+        _comPos       = lTorso.GlobalPosition;
+        _comVel       = Vector3.Zero;
 
         _feet[L] = new Foot
         {
@@ -137,8 +156,8 @@ public partial class FootStepper : Node
         // back under the body when decelerating, with no input required.
         // CaptureGain ≈ 1/ω where ω = sqrt(g/h): physically correct at ~0.25 for 0.6m
         // hip height. Higher values step further ahead — large values give inebriated overshoot.
-        var comXZ    = new Vector3(_lTorso.GlobalPosition.X, groundY, _lTorso.GlobalPosition.Z);
-        var comVelXZ = new Vector3(_lTorso.LinearVelocity.X, 0f,     _lTorso.LinearVelocity.Z);
+        var comXZ    = new Vector3(_comPos.X, groundY, _comPos.Z);
+        var comVelXZ = new Vector3(_comVel.X, 0f,      _comVel.Z);
         // Only project the foot target ahead when actually moving — at rest, residual
         // physics-settle velocity would displace the target and trigger spurious steps.
         var captureXZ = comVelXZ.Length() > RestVelocityThreshold
@@ -182,10 +201,19 @@ public partial class FootStepper : Node
                 var targetXZ    = new Vector3(f.Target.X,              0f, f.Target.Z);
                 var horizErr    = targetXZ - ulegXZ;
                 var horizVel    = new Vector3(f.ULeg.LinearVelocity.X, 0f, f.ULeg.LinearVelocity.Z);
-                f.ULeg.ApplyCentralForce(
-                    horizErr * LegDriveForce
-                    + Vector3.Up * LegLiftForce
-                    - horizVel  * LegDriveDamp);
+                var driveForce  = horizErr * LegDriveForce - horizVel * LegDriveDamp;
+                f.ULeg.ApplyCentralForce(driveForce + Vector3.Up * LegLiftForce);
+
+                // Counter-torque: cancel the yaw spin the drive force injects into the torso
+                // via the hip joint. Lever arm = ULeg position relative to torso centre.
+                // The Y component of (r × F) is the yaw torque; we apply the negative.
+                if (StepYawCancel > 0f)
+                {
+                    var r        = f.ULeg.GlobalPosition - _lTorso.GlobalPosition;
+                    var rXZ      = new Vector3(r.X, 0f, r.Z);
+                    var yawTorq  = rXZ.Cross(driveForce).Y;
+                    _lTorso.ApplyTorque(Vector3.Up * (-yawTorq * StepYawCancel));
+                }
 
                 // ── Foot: fine spring to exact target ────────────────────────
                 var err = f.Target - f.Body.GlobalPosition;

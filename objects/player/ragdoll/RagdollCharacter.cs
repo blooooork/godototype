@@ -549,6 +549,7 @@ public partial class RagdollCharacter : Node3D, IResettable
             _balanceController.MoveForce          = S.MoveForce;
             _balanceController.VelocityLean       = S.VelocityLean;
             _balanceController.IdleBrakingForce   = S.IdleBrakingForce;
+            _balanceController.LateralDampForce   = S.LateralDampForce;
             _balanceController.LeanRestoreForce   = S.LeanRestoreForce;
             _balanceController.LeanRestoreDamping = S.LeanRestoreDamping;
             _balanceController.TurnMaxSpeed       = S.TurnMaxSpeed;
@@ -585,6 +586,7 @@ public partial class RagdollCharacter : Node3D, IResettable
             _footStepper.PlantTolerance         = S.PlantTolerance;
             _footStepper.StepCooldown           = S.StepCooldown;
             _footStepper.RestVelocityThreshold  = S.RestVelocityThreshold;
+            _footStepper.StepYawCancel          = S.StepYawCancel;
         }
 
         GetNodeOrNull<RagdollDebugOverlay>("DebugOverlay")

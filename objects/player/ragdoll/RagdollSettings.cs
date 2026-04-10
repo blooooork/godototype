@@ -83,7 +83,7 @@ public partial class RagdollSettings : Resource
     //   Negative = assists spin — use if stepping circles the wrong way and you need
     //              to push back. Start at 0, raise in small steps (try 2–8) until
     //              the straight-ahead shuffle stops curving.
-    [Export] public float YawDamping { get; set; } = 5f;
+    [Export] public float YawDamping { get; set; } = 2f;
 
     // How much the spine joints follow the balance lean direction.
     // 0 = rigid column, 1 = spine fully matches the lean angle.
@@ -106,17 +106,22 @@ public partial class RagdollSettings : Resource
     // Does not apply once input is held, so walking force is unaffected.
     [Export] public float IdleBrakingForce { get; set; } = 20f;
 
+    // Drag on velocity perpendicular to the input direction while moving.
+    // Counteracts lateral drift from asymmetric step reaction forces.
+    // Start at 15; raise if the body still curves; lower if movement feels sluggish turning.
+    [Export] public float LateralDampForce { get; set; } = 15f;
+
     // PD spring pulling the whole-body CoM back toward the planted-foot midpoint.
     // Implements the ankle + hip strategy — resists idle lean and position drift without
     // requiring a step. The balance joint corrects tilt (orientation); this corrects drift
     // (position). Start at 0 and raise in steps: try 10 → 20 → 40.
     // Too high = jerky snap-back or fights walking; too low = drift persists.
-    [Export] public float LeanRestoreForce   { get; set; } = 0f;
+    [Export] public float LeanRestoreForce   { get; set; } = 15f;
 
     // Damping on the lean-restore spring. Prevents the CoM from oscillating around the
     // support centre after a correction. Raise if you see the body rock back and forth.
     // Typical range: 5–15. Should be roughly LeanRestoreForce / 3.
-    [Export] public float LeanRestoreDamping { get; set; } = 0f;
+    [Export] public float LeanRestoreDamping { get; set; } = 5f;
 
 
     // ── Stepping ──────────────────────────────────────────────────────────────
@@ -161,6 +166,11 @@ public partial class RagdollSettings : Resource
 
     // Damping on the upper leg's horizontal velocity during swing.
     [Export] public float LegDriveDamp { get; set; } = 4f;
+
+    // Fraction (0–1) of the yaw torque injected by step drive forces to cancel on the torso.
+    // 0 = no cancellation (old behaviour). Start at 0.5 and raise if straight walking
+    // still drifts even after reducing LateralDampForce; back off if the body over-corrects.
+    [Export] public float StepYawCancel { get; set; } = 0.5f;
 
     // Fine spring force applied directly to the foot toward the exact target.
     [Export] public float FootSpringForce { get; set; } = 120f;

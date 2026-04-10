@@ -25,6 +25,9 @@ public partial class BalanceController : Node, IBalanceable
     // Equivalent to the ankle+hip strategy in Euphoria — corrects position drift without stepping.
     public float LeanRestoreForce   { get; set; } = 0f;
     public float LeanRestoreDamping { get; set; } = 0f;
+    // Drag applied to velocity components perpendicular to the input direction while moving.
+    // Counteracts yaw-induced lateral drift from asymmetric step reaction forces.
+    public float LateralDampForce   { get; set; } = 15f;
 
     public BalanceState State { get; private set; } = BalanceState.Standing;
 
@@ -202,6 +205,10 @@ public partial class BalanceController : Node, IBalanceable
                 comVel    += b.LinearVelocity  * b.Mass;
             }
             if (totalMass > 0f) { comPos /= totalMass; comVel /= totalMass; }
+
+            // Feed the true CoM into FootStepper so capture-point calculations use
+            // the whole-body mass centre rather than just the lower torso position.
+            _footStepper?.UpdateCoM(comPos, comVel);
         }
 
         // Lean anchor toward input — tips the CoM, causing the character to stumble forward.
@@ -264,6 +271,15 @@ public partial class BalanceController : Node, IBalanceable
 
                 // Directional force — lean alone is slow, force provides initial momentum.
                 _lTorso.ApplyCentralForce(inputDir * MoveForce);
+
+                // Damp lateral drift — kill velocity perpendicular to input so step
+                // reaction forces don't accumulate sideways momentum while moving.
+                if (LateralDampForce > 0f)
+                {
+                    var hVel       = new Vector3(_lTorso.LinearVelocity.X, 0f, _lTorso.LinearVelocity.Z);
+                    var lateralVel = hVel - inputDir * hVel.Dot(inputDir);
+                    _lTorso.ApplyCentralForce(-lateralVel * LateralDampForce);
+                }
             }
             else
             {
@@ -348,6 +364,14 @@ public partial class BalanceController : Node, IBalanceable
                 var desiredYawVel = _rotateDir * Mathf.DegToRad(TurnMaxSpeed);
                 var yawVel        = _lTorso.AngularVelocity.Dot(Vector3.Up);
                 _lTorso.ApplyTorque(Vector3.Up * (YawDamping * (desiredYawVel - yawVel)));
+
+                // Also damp yaw on the upper torso — spine jitter can accumulate angular
+                // momentum that lTorso damping alone won't reach.
+                if (IsInstanceValid(_uTorso))
+                {
+                    var uYawVel = _uTorso.AngularVelocity.Dot(Vector3.Up);
+                    _uTorso.ApplyTorque(Vector3.Up * (-YawDamping * uYawVel));
+                }
             }
 
             // Accumulate the turn into _anchorRestBasis so the balance-spring upright

@@ -18,6 +18,9 @@ namespace godototype.objects.player.ragdoll;
 ///   •   ↳ crossbar         — current shoulder height on posture pole
 ///
 /// Toggle: F3  OR  console command `debug [on|off|toggle]`
+///
+/// While enabled, also emits [IvM] log lines at 10 Hz (see LogInterval) capturing
+/// input direction, momentum direction, speed, and signed angle between them.
 /// </summary>
 public partial class RagdollDebugOverlay : Node3D
 {
@@ -33,6 +36,13 @@ public partial class RagdollDebugOverlay : Node3D
     private RigidBody3D                _head;
     private BalanceController          _balance;
     private FootStepper                _stepper;
+
+    // Input-vs-momentum logging — fires at most once per LogInterval seconds.
+    // Logs whenever input is held OR momentum is above the noise floor so coasting
+    // behaviour (input released but body still moving) is captured for analysis.
+    private const  float LogInterval   = 0.1f;
+    private const  float MomThreshold  = 0.05f; // m/s — below this is noise/settle
+    private        float _logTimer     = 0f;
 
     // Shoulder/hip pole endpoints stored in torso-local space so they track
     // the torso rotation without inheriting noise from swinging limbs.
@@ -302,6 +312,64 @@ public partial class RagdollDebugOverlay : Node3D
         }
 
         _mesh.SurfaceEnd();
+
+        // ── Input vs momentum logging ─────────────────────────────────────────
+        _logTimer -= (float)delta;
+        if (_logTimer <= 0f)
+        {
+            _logTimer = LogInterval;
+            LogInputVsMomentum(velXZ);
+        }
+    }
+
+    /// Logs a single sample line whenever there is active input OR the body has
+    /// meaningful momentum. The coasting window (input=zero, momentum still live)
+    /// is intentionally captured — that's the "we only gave X input, look what
+    /// momentum did" data the analysis is for.
+    ///
+    /// Format (one line, tab-separated fields):
+    ///   [IvM]  t=…s  input=(x,z)  mom=(x,z)  speed=…  angle=…°
+    ///
+    /// Fields:
+    ///   t      — engine time in seconds (monotonic, easy to diff)
+    ///   input  — world-space XZ direction of held input (0,0 when idle)
+    ///   mom    — normalised XZ momentum direction (0,0 below threshold)
+    ///   speed  — raw XZ speed in m/s
+    ///   angle  — signed angle input→momentum in degrees (+ve = momentum leads right,
+    ///            -ve = leads left). "---" when one vector is zero.
+    private void LogInputVsMomentum(Vector3 velXZ)
+    {
+        if (_balance == null) return;
+
+        var inputDir = _balance.WorldInputDir;           // unit or zero
+        var speed    = velXZ.Length();
+        var hasInput = inputDir.LengthSquared() > 0.0001f;
+        var hasMom   = speed > MomThreshold;
+
+        if (!hasInput && !hasMom) return;                // both zero — nothing to record
+
+        var momDir = hasMom ? velXZ / speed : Vector3.Zero;
+
+        // Signed angle (degrees) from input to momentum around world-up.
+        // Positive = momentum is clockwise of input when viewed from above.
+        string angleStr;
+        if (hasInput && hasMom)
+        {
+            var cross = inputDir.Cross(momDir).Y;        // Y component = signed sin of angle
+            var dot   = inputDir.Dot(momDir);
+            var deg   = Mathf.RadToDeg(Mathf.Atan2(cross, dot));
+            angleStr  = $"{deg:+0.0;-0.0;0.0}°";
+        }
+        else
+        {
+            angleStr = "---";
+        }
+
+        var t = Time.GetTicksMsec() * 0.001f;
+        var i = hasInput ? $"({inputDir.X:+0.00;-0.00},{inputDir.Z:+0.00;-0.00})" : "(0,0)";
+        var m = hasMom   ? $"({momDir.X:+0.00;-0.00},{momDir.Z:+0.00;-0.00})"     : "(0,0)";
+
+        GD.Print($"[IvM]\tt={t:F3}s\tinput={i}\tmom={m}\tspeed={speed:F2}\tangle={angleStr}");
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
