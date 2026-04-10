@@ -313,7 +313,24 @@ public partial class BalanceController : Node, IBalanceable
                     if (LeanRestoreForce > 0f)
                     {
                         var comVelXZ = new Vector3(comVel.X, 0f, comVel.Z);
-                        _lTorso.ApplyCentralForce(-leanErr * LeanRestoreForce - comVelXZ * LeanRestoreDamping);
+
+                        // Only correct drift perpendicular to the input direction.
+                        // Full leanErr correction fights intentional movement: moving left shifts CoM
+                        // left of feet → leanErr points left → restore force pushes right → stalls the move.
+                        // With input held, strip the parallel component so balance doesn't fight locomotion.
+                        // At idle (no input) apply full correction — nothing to protect.
+                        Vector3 errToUse, velToUse;
+                        if (inputDir.LengthSquared() > 0.0001f)
+                        {
+                            errToUse = leanErr  - inputDir * leanErr.Dot(inputDir);
+                            velToUse = comVelXZ - inputDir * comVelXZ.Dot(inputDir);
+                        }
+                        else
+                        {
+                            errToUse = leanErr;
+                            velToUse = comVelXZ;
+                        }
+                        _lTorso.ApplyCentralForce(-errToUse * LeanRestoreForce - velToUse * LeanRestoreDamping);
                     }
                 }
             }
